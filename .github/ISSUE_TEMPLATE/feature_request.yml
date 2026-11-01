@@ -1,0 +1,17 @@
+name: 场景与建议
+description: 描述你希望 Orivii 帮你完成的事情
+title: "[Idea] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: 使用场景与当前困难
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 你期待的体验
+      description: 可以描述具体例子；请使用虚构资料。
+    validations:
+      required: true
