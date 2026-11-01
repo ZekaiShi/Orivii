@@ -23,10 +23,10 @@ Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生�
 
 需要 Node.js **>=24.2.0**、兼容的 DSH **0.2.1** 系列，以及已经配置好的模型。
 
-Web：
+Web 推荐直接安装 GitHub Release 中的预构建包，无需本地编译：
 
 ```sh
-dsh plugin --profile web add github:ZekaiShi/Orivii#v1.0.0
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.0/dsh-companion-1.0.0.tgz
 ```
 
 也可以从 [Releases](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.0) 下载安装包：
@@ -35,7 +35,9 @@ dsh plugin --profile web add github:ZekaiShi/Orivii#v1.0.0
 dsh plugin --profile web add ./dsh-companion-1.0.0.tgz
 ```
 
-Desktop 请通过应用内插件管理添加 GitHub 来源或下载的安装包。安装完成后按提示重新启动并刷新页面。
+Desktop 请通过应用内插件管理添加上述完整 Release 地址或下载的安装包。安装完成后按提示重新启动并刷新页面。
+
+Orivii 当前通过本仓库的 GitHub Release 分发，请使用上述完整地址；npm 上的同名 `dsh-companion` 包是另一个项目。
 
 首次打开 Orivii 时，选择工作空间、设置名字并创建密码，然后开始聊天。路径指向 DSH 后端所在的电脑。
 
