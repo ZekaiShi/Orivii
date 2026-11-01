@@ -1,8 +1,9 @@
 # Orivii 宣传素材
 
-- `orivii-film.mp4`：30 秒、1080p60 宣传动画，采用已经确认的 Csus4/G7 音乐版本。
+- `orivii-film.mp4`：30 秒、1080p60 宣传动画，配有 Csus4/G7 和声的原创音乐。
 - `preview.gif`：README 首屏短循环；点击观看完整视频。
 - `cover.png`、`expressions.png`、`memory.png`：从同一部动画提取的封面与场景图。
+- `social-preview.png`：从影片第 28 秒品牌定格提取的 1280×640 PNG，适用于 GitHub 仓库的 Social preview；画面居中裁切，未拉伸角色。
 
 动画、对话和构图为本项目制作的演示素材；它不是产品实际操作录屏，也不包含真实用户聊天。产品能力以 README 的已实现清单为准，未来计划单独列在 UPDATES.md。
 
