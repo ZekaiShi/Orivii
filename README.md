@@ -4,7 +4,7 @@
 
 [![Orivii — watch the 30-second film](media/preview.gif)](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4)
 
-[▶ 观看完整宣传片](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4) · [下载 1.0.0](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.0) · [更新计划](UPDATES.md)
+[▶ 观看完整宣传片](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4) · [下载 1.0.1](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.1) · [更新计划](UPDATES.md)
 
 Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生动的眼睛回应你，在同一工作空间的新聊天中接续记忆，也能查询资料、设置提醒和委托后台工作。
 
@@ -18,6 +18,8 @@ Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生�
 - **联网与后台工作**：查询公开资料，处理你明确委托的工作，再将结果带回聊天。
 - **提醒与关心**：用自然语言约定提醒，支持取消和改期。
 - **本地工作空间**：支持密码加密、锁定及重新解锁。
+- **多个 Orivii**：在设置中创建和切换不同角色，分别保存聊天、记忆和相处方式。
+- **解锁期限**：本次 DSH 运行、8 小时或 24 小时；期限内刷新页面或切换已解锁角色无需重复输入密码。
 
 ## 安装
 
@@ -26,13 +28,13 @@ Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生�
 Web 推荐直接安装 GitHub Release 中的预构建包，无需本地编译：
 
 ```sh
-dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.0/dsh-companion-1.0.0.tgz
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.1/dsh-companion-1.0.1.tgz
 ```
 
-也可以从 [Releases](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.0) 下载安装包：
+也可以从 [Releases](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.1) 下载安装包：
 
 ```sh
-dsh plugin --profile web add ./dsh-companion-1.0.0.tgz
+dsh plugin --profile web add ./dsh-companion-1.0.1.tgz
 ```
 
 Desktop 请通过应用内插件管理添加上述完整 Release 地址或下载的安装包。安装完成后按提示重新启动并刷新页面。
@@ -40,6 +42,16 @@ Desktop 请通过应用内插件管理添加上述完整 Release 地址或下载
 Orivii 当前通过本仓库的 GitHub Release 分发，请使用上述完整地址；npm 上的同名 `dsh-companion` 包是另一个项目。
 
 首次打开 Orivii 时，选择工作空间、设置名字并创建密码，然后开始聊天。路径指向 DSH 后端所在的电脑。
+
+## 多个 Orivii 与解锁
+
+打开“设置 → 我的 Orivii”，可以创建另一个角色并填写名字、最初的相处方式和密码。资料目录会自动分配，原角色的聊天和记忆不会复制过去。创建和切换无需重启 DSH。
+
+- 每个加密角色有自己的密码。首次解锁后，期限内切换回来无需再次输入；明文模式不提供密码保护。
+- 解锁期限可选“本次 DSH 运行”“每 8 小时验证”“每 24 小时验证”。刷新和切换不会延长期限；延长策略在下次输入密码后生效。
+- 关闭页面不会锁定记忆库。手动“锁定”会锁住当前 Host 全部角色；DSH 退出或电脑重启后重新解锁。Web 与 Desktop 分别管理解锁状态。
+- 后台文字任务继续留在原角色中处理。存在未发送草稿或未送达消息时，会先提示处理这些内容再切换。
+- 密码、解密密钥和 Orivii 访问令牌不写入浏览器存储。角色选择列表保存名字、资料路径和验证策略；聊天与相处方式沿用各角色的加密选择。
 
 ## 使用须知
 

@@ -11,13 +11,18 @@ export function createDotRemote(z) {
     longContextBudget:z.number().int().min(0).max(30000).optional(),autoPermanent:z.boolean().optional(),autoProfile:z.boolean().optional(),autoLearn:z.boolean().optional(),webSearch:z.boolean().optional(),eyeAnimation:z.boolean().optional(),
   })
   const id=z.string().regex(/^[a-f0-9-]{36}$/)
+  const sessionMode=z.enum(['run','8h','24h'])
   const operation=(action,fields={})=>z.strictObject({action:z.literal(action),token:z.string().max(64).optional(),...fields})
   const request=z.discriminatedUnion('action',[
     operation('status',{workspace:z.string().max(4096).optional()}),
     operation('webCheck'),
+    operation('resume',{identityId:id.optional()}),operation('identities'),
+    operation('sessionPolicy',{mode:sessionMode}),
+    operation('identitySwitch',{identityId:id,password:z.string().max(1024).optional()}),
+    operation('identityCreate',{name:z.string().min(1).max(200),persona:z.string().max(2000).optional(),password:z.string().max(1024).optional(),plaintext:z.boolean().optional(),plaintextAcknowledgement:z.string().max(100).optional(),sessionMode:sessionMode.optional()}),
     operation('extension',{request:z.record(z.string(),z.unknown())}),
-    operation('setup',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional(),settings:settings.optional(),profile:profile.optional(),plaintext:z.boolean().optional(),plaintextAcknowledgement:z.string().max(100).optional()}),
-    operation('unlock',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional()}),
+    operation('setup',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional(),settings:settings.optional(),profile:profile.optional(),plaintext:z.boolean().optional(),plaintextAcknowledgement:z.string().max(100).optional(),sessionMode:sessionMode.optional()}),
+    operation('unlock',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional(),sessionMode:sessionMode.optional()}),
     operation('snapshot',{chatId:id.nullish(),beforeId:id.optional()}),
     operation('progress',{chatId:id}),
     operation('developerMode',{enabled:z.boolean()}),

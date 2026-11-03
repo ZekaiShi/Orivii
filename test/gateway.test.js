@@ -66,10 +66,16 @@ test('built Orivii activates through actual DSH Client Remote and Host Gateway; 
       assert.equal(throughClient.ok,true)
       assert.equal(throughClient.value.ok,true)
       assert.equal(throughClient.value.value.unlocked,false)
+      for(const request of [{action:'resume'},{action:'identitySwitch',identityId:'12345678-1234-4234-8234-123456789012'},{action:'identityCreate',name:'Test',password:'test-only-password'},{action:'sessionPolicy',mode:'8h'}]){
+        const response=await client.remote.dotCompanion.command(request)
+        assert.equal(response.ok,true,'identity action must pass both strict gateway contracts');assert.equal(response.value.error.code,'locked')
+      }
+      assert.equal((await client.remote.dotCompanion.command({action:'identities'})).value.ok,true)
       await assert.rejects(()=>ctx.typertGateway.invoke({namespace:'dotCompanion',method:'command',args:{request:{action:'unlock',password:'test-only',unexpected:true}},peer}))
       await client.fiber.dispose()
     } finally {await client.fiber.dispose()}
     await assert.rejects(()=>ctx.typertGateway.invoke({namespace:'dotCompanion',method:'command',args:{request:{action:'status'}},peer:{...peer,principal:{kind:'guest'}}}),/access denied/)
+    for(const action of ['resume','identities'])await assert.rejects(()=>ctx.typertGateway.invoke({namespace:'dotCompanion',method:'command',args:{request:{action}},peer:{...peer,principal:{kind:'guest'}}}),/access denied/)
     await assert.rejects(()=>ctx.typertGateway.invoke({namespace:'dotCompanion',method:'command',args:{request:{action:'status'},unexpected:true},peer}))
   } finally {await ctx.fiber.dispose()}
 })
@@ -87,6 +93,12 @@ test('strict contract accepts frontend setup, unlock, snapshots, edits and legac
     {action:'memories',layer:'memes'},
     {action:'setup',workspace:'H:\\DotWorkspace',password:'test-only-password',plaintext:false},
     {action:'unlock',workspace:'H:\\DotWorkspace',password:'test-only-password'},
+    {action:'unlock',workspace:'H:\\DotWorkspace',password:'test-only-password',sessionMode:'24h'},
+    {action:'resume',identityId:id},
+    {action:'identities'},
+    {action:'identitySwitch',identityId:id,password:'test-only-password'},
+    {action:'identityCreate',name:'Second',persona:'温柔',password:'test-only-password',sessionMode:'8h'},
+    {action:'sessionPolicy',mode:'run'},
     {action:'snapshot',chatId:null},
     {action:'developerMode',enabled:true},
     {action:'developerSnapshot',chatId:id},
@@ -95,6 +107,8 @@ test('strict contract accepts frontend setup, unlock, snapshots, edits and legac
     {action:'import',legacyId:'old-session',title:'旧对话',messages:[{seq:1,role:'user',time:1,text:'你好'}]},
   ])assert.doesNotThrow(()=>parse(value))
   assert.throws(()=>parse({action:'unknown'}))
+  assert.throws(()=>parse({action:'resume',password:'not-accepted'}))
+  assert.throws(()=>parse({action:'sessionPolicy',mode:'forever'}))
   assert.throws(()=>parse({action:'developerMode',enabled:'true'}))
   assert.throws(()=>parse({action:'developerSnapshot',includeReasoning:true}))
   assert.throws(()=>parse({action:'status',password:'unexpected'}))
@@ -109,10 +123,10 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
   await fs.mkdir(base,{recursive:true})
   const fixture=await fs.mkdtemp(path.join(base,'dot-ui-test-'))
   const host=new Context(),client=new Context(),registrations=[],calls=[]
-  let renderer
+  let renderer,delaySnapshot,releaseSnapshot
   try {
     class Dependencies extends Service {
-      constructor(ctx){super(ctx,'remoteAccess');this.decide=()=>({kind:'deny'});ctx.provide('llm',{});ctx.provide('agentDefaultModel',{currentSelection:()=>({provider:'test',model:'test'})})}
+      constructor(ctx){super(ctx,'remoteAccess');this.decide=()=>({kind:'deny'});ctx.provide('llm',{listProviders:()=>[],listModels:async()=>[]});ctx.provide('agentDefaultModel',{currentSelection:()=>({provider:'test',model:'test'})})}
     }
     await host.plugin(Dependencies);await host.plugin(Registry)
     await host.plugin(Gateway,{websocketHeartbeatIntervalMs:2000,streamInboxBytes:262144})
@@ -126,7 +140,12 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
       async call(channel,endpoint,payload,signal){
         assert.equal(channel,'/api');calls.push(payload.args.request.action)
         const [namespace,method]=endpoint.split('/')
-        return {ok:true,value:await host.typertGateway.invoke({namespace,method,args:payload.args,signal,peer})}
+        const result={ok:true,value:await host.typertGateway.invoke({namespace,method,args:payload.args,signal,peer})}
+        if(delaySnapshot&&payload.args.request.action==='snapshot'){
+          const entered=delaySnapshot;delaySnapshot=null
+          await new Promise(resolve=>{releaseSnapshot=resolve;entered()})
+        }
+        return result
       },
     }})
     await client.plugin(ClientRemote)
@@ -156,13 +175,13 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
       window:{__ModuleLoader__:{load({factory}){plugin=factory(name=>{if(name==='react')return React;if(name==='@deepseek-ai/dsh-client-ui-primitives')return {MarkdownText};if(name==='zod')return {z};throw new Error('Unexpected dependency')})}}},
       AbortController,setInterval,clearInterval,setTimeout,clearTimeout,crypto,
     })
-    const fiber=client.plugin(plugin);await fiber
+    let fiber=client.plugin(plugin);await fiber
     // Root contexts bypass injection checks. Prove this test exercises a plugin
     // scope, which is where alpha.2 failed on the first effect and button click.
     let missingDependency
     await client.plugin({inject:['remote'],apply(ctx){try{void ctx.remote.dotCompanion}catch(e){missingDependency=e}}})
     assert.match(missingDependency?.message||'',/remote\.dotCompanion.*without inject/)
-    const Panel=registrations.find(r=>r.options.name==='main').component
+    let Panel=registrations.find(r=>r.options.name==='main').component
     const visible=node=>{for(let parent=node;parent;parent=parent.parent)if(parent.props.inert!==undefined)return false;return true}
     const find=(type,predicate)=>renderer.root.findAllByType(type).find(node=>visible(node)&&predicate(node))
     const button=label=>find('button',n=>n.props['aria-label']===label)
@@ -229,11 +248,55 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
       else {await change(field('记忆库密码'),'test-only-password');await change(field('确认密码'),'test-only-password')}
       await act(async()=>{renderer.root.findByType('form').props.onSubmit({preventDefault(){}})})
       await waitFor(()=>renderer.root.findAll(n=>n.props['data-testid']==='dot-page').length===1&&button('新建聊天')?.props.disabled===false)
-      assert.equal(host.dotCompanion.host.vault.workspace,workspace)
-      assert.equal(host.dotCompanion.host.vault.meta.encrypted,!plaintext)
+      assert.equal(host.dotCompanion.host.identities.runtime(workspace).vault.workspace,workspace)
+      assert.equal(host.dotCompanion.host.identities.runtime(workspace).vault.meta.encrypted,!plaintext)
       await click(button('新建聊天'))
       await waitFor(()=>renderer.root.findAll(n=>n.props.className==='dot-contact').some(n=>n.findAllByType('span').some(s=>s.children.includes('新的聊天'))))
       assert.equal(renderer.root.findAll(n=>n.props.className==='dot-inbox').length,0,'chat management must not occupy the main panel')
+      await click(button('更多'))
+      await click(button('设置'))
+      await click(button('我的 Orivii'))
+      await waitFor(()=>renderer.root.findAllByProps({'aria-label':'切换 Orivii'}).length===1)
+      assert.equal(renderer.root.findByProps({'aria-label':'解锁期限'}).props.value,'run')
+      if(plaintext){
+        const originalId=host.dotCompanion.host.identities.runtime(workspace).vault.meta.id
+        await change(find('textarea',n=>n.props['aria-label']==='消息'),'尚未发送的草稿')
+        await change(field('新 Orivii 名字'),'第二个 Orivii')
+        await change(find('textarea',n=>n.props['aria-label']==='新 Orivii 相处方式'),'爱玩梗，活泼健谈。')
+        await act(async()=>{find('input',n=>n.props.type==='checkbox').props.onChange({target:{checked:true}})})
+        const count=calls.filter(action=>action==='identityCreate').length
+        await click(button('创建并切换'))
+        assert.equal(calls.filter(action=>action==='identityCreate').length,count,'draft must block switching before any Host mutation')
+        assert.equal(find('textarea',n=>n.props['aria-label']==='消息').props.value,'尚未发送的草稿')
+        await click(button('关闭提示'))
+        await change(find('textarea',n=>n.props['aria-label']==='消息'),'')
+        await click(button('创建并切换'))
+        await waitFor(()=>find('textarea',n=>n.props['aria-label']==='消息')?.props.placeholder==='发消息给第二个 Orivii…'&&button('新建聊天')?.props.disabled===false)
+        assert.equal(host.dotCompanion.host.identities.runtimes.size,2)
+        assert.equal(renderer.root.findAll(n=>n.props.className==='dot-contact').some(n=>n.findAllByType('span').some(s=>s.children.includes('新的聊天'))),false,'new identity must not display the original chat')
+        await click(button('更多'));await click(button('设置'));await click(button('我的 Orivii'))
+        await waitFor(()=>find('select',n=>n.props['aria-label']==='切换 Orivii'))
+        // Hold B's old snapshot after it left the Host but before the browser
+        // receives it, then complete the identity switch in the meantime.
+        const oldSnapshot=new Promise(resolve=>{delaySnapshot=resolve})
+        await act(async()=>{await oldSnapshot})
+        await change(find('select',n=>n.props['aria-label']==='切换 Orivii'),originalId)
+        await click(button('切换到这个 Orivii'))
+        await act(async()=>{releaseSnapshot();releaseSnapshot=null;await new Promise(resolve=>setTimeout(resolve,0))})
+        await waitFor(()=>find('textarea',n=>n.props['aria-label']==='消息')?.props.placeholder==='发消息给Orivii…'&&button('新建聊天')?.props.disabled===false)
+        const unlockCount=calls.filter(action=>action==='unlock').length
+        // Re-register the entire browser module, losing every in-memory renderer
+        // capability, as on a genuine page reload. No browser storage is supplied.
+        await act(async()=>{renderer.unmount();renderer=undefined});await fiber.dispose()
+        fiber=client.plugin(plugin);await fiber;Panel=registrations.findLast(r=>r.options.name==='main').component
+        await act(async()=>{renderer=TestRenderer.create(React.createElement(Panel))})
+        await waitFor(()=>find('textarea',n=>n.props['aria-label']==='消息')?.props.placeholder==='发消息给Orivii…'&&button('新建聊天')?.props.disabled===false)
+        assert.equal(calls.filter(action=>action==='unlock').length,unlockCount,'page reload must resume without another password submission')
+        await click(button('更多'));await click(button('设置'));await click(button('我的 Orivii'))
+        await waitFor(()=>find('select',n=>n.props['aria-label']==='切换 Orivii'))
+      }
+      await click(button('返回设置'))
+      await click(button('关闭'))
       await click(button('更多'))
       await click(button('锁定'))
       assert.equal(host.dotCompanion.host.vault,null)
@@ -253,6 +316,7 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
     await fiber.dispose()
     assert.equal(client.reflect.get('remote.dotCompanion'),undefined,'plugin disposal withdraws the mounted namespace')
   } finally {
+    releaseSnapshot?.()
     if(renderer)await act(async()=>{renderer.unmount()})
     await client.fiber.dispose();await host.fiber.dispose()
     await fs.rm(fixture,{recursive:true,force:true})

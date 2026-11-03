@@ -1,6 +1,6 @@
 {
   "name": "dsh-companion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Orivii: an expressive personal assistant for DeepSeek Harness with shared memory, proactive reminders and background work",
   "type": "module",
   "main": "index.js",
@@ -24,7 +24,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test test/*.test.js",
-    "check": "node --check src/core.js && node --check src/expression.js && node --check src/ink.js && node --check src/reply.js && node --check src/eye-state.js && node --check src/eye.js && node --check src/motion.js && node --check src/ui-state.js && node --check src/recall.js && node --check src/profile.js && node --check src/client.js && node --check src/host.js && node --check src/web.js && node --check src/engine.js && node --check src/vault.js && node --check src/memory.js && node --check dsh/client.js && node --check src/extension.js && node --check src/work.js && node --check src/assistant.js && node --check src/assistant-state.js && node --check src/reminders.js && node --check src/reminder-tools.js && node --check src/research.js && node --check src/companion-settings.js && node --check src/developer.js",
+    "check": "node scripts/check.mjs",
     "prepack": "npm run build && npm run check && npm test && node scripts/export-public.mjs --check",
     "release:source": "node scripts/export-public.mjs"
   },

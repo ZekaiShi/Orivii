@@ -13,13 +13,15 @@ import {searchWeb} from './web.js'
 import {loadExtension} from './extension.js'
 import {workspaceBridge} from './work.js'
 import {publicBubble} from './expression.js'
+import {IdentityManager} from './identities.js'
 import metadata from '../package.json' with {type:'json'}
 
 const DOT_REMOTE=createDotRemote(z)
 
 export class DotHost {
-  constructor(services,{pointer=path.join(process.env.DSH_HOME||path.join(homedir(),'.dsh'),'dot','workspace.json')}={}) {
+  constructor(services,{pointer=path.join(process.env.DSH_HOME||path.join(homedir(),'.dsh'),'dot','workspace.json'),identities,now=Date.now}={}) {
     this.services=services;this.pointer=pointer;this.vault=null;this.engine=null;this.tokens=new Set();this.developerTokens=new Set();this.developerTimers=new Map();this.transition=Promise.resolve();this.failedUnlocks=0;this.nextUnlock=0
+    this.identities=identities||new IdentityManager(this,{now,create:()=>new DotHost(services,{pointer:this.pointer,identities:this.identities,now})})
   }
   developerAccess(token,enabled){
     clearTimeout(this.developerTimers.get(token));this.developerTimers.delete(token)
@@ -47,6 +49,7 @@ export class DotHost {
   }
   allowed(token) {
     if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))return false
+    if(this.access&&this.access.expiresAt!==null&&this.identities.now()>=this.access.expiresAt)return false
     return [...this.tokens].some(t=>timingSafeEqual(Buffer.from(t),Buffer.from(token)))
   }
   async open(request) {
@@ -90,7 +93,8 @@ export class DotHost {
     const token=randomBytes(32).toString('hex');this.tokens.add(token)
     return {token,workspace:this.vault.workspace}
   }
-  async command(request) {
+  command(request){return this.identities.command(request)}
+  async commandLocal(request) {
     try {
       if(!request||typeof request!=='object'||Array.isArray(request)||JSON.stringify(request).length>2000000)throw new DotError('请求格式错误或过大。')
       // Owner-only public connectivity check; no vault data or arbitrary input.
@@ -211,7 +215,12 @@ export class DotHost {
       default:throw new DotError('不支持此操作。')
     }
   }
-  async dispose(){this.tokens.clear();this.clearDeveloper();await this.engine?.shutdown();await this.vault?.queue;this.vault?.close();this.vault=null}
+  dispose(){return this.identities.dispose()}
+  async disposeLocal(){
+    this.tokens.clear();this.clearDeveloper()
+    try{await Promise.allSettled([this.engine?.shutdown(),this.vault?.queue])}
+    finally{this.vault?.close();this.vault=null;this.engine=null}
+  }
 }
 
 export class DotService extends Service {

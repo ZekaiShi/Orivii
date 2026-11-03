@@ -7,9 +7,10 @@ import {bubbleParts,createPacedReply} from './reply.js'
 import {publicBubble} from './expression.js'
 import {createCompanionSettings} from './companion-settings.js'
 import {createDeveloperPanel} from './developer.js'
+import {createIdentitySettings} from './identity-client.js'
 
 const PANEL_ID='dsh-companion-dot'
-const DRAWER_TITLES={settings:'设置',developer:'开发者模式',persona:'交流方式',care:'消息与安静时段',privacy:'数据与权限',tasks:'工作记录',profile:'关于你',memory:'聊过的内容',search:'查聊天记录',source:'原始聊天'}
+const DRAWER_TITLES={settings:'设置',identities:'我的 Orivii',developer:'开发者模式',persona:'交流方式',care:'消息与安静时段',privacy:'数据与权限',tasks:'工作记录',profile:'关于你',memory:'聊过的内容',search:'查聊天记录',source:'原始聊天'}
 async function apply(ctx) {
   const unmount=await ctx.remote.$mount(createDotRemote(require('zod').z))
   // Mounted namespaces are separate Cordis services; UI callbacks must close
@@ -39,7 +40,9 @@ function registerUi(ctx) {
   const panelVisible=()=>ctx.layout?.panelInfo?ctx.layout.panelInfo.getSnapshot().activePanelId===PANEL_ID:true
   let unlockToken='' // capability lives only in this renderer's memory
   async function rpc(action,data={}) {
-    const result=unwrap(await ctx.remote.dotCompanion.command({action,token:unlockToken,...data}))
+    const capability=unlockToken
+    const result=unwrap(await ctx.remote.dotCompanion.command({action,token:capability,...data}))
+    if(capability!==unlockToken){const error=new Error('已切换 Orivii，忽略先前的响应。');error.code='stale';throw error}
     if(!result.ok){const error=new Error(result.error.message);error.code=result.error.code;throw error}
     return result.value
   }
@@ -58,6 +61,7 @@ function registerUi(ctx) {
   const markdownLabels={code:{copyLabel:'复制',copiedLabel:'已复制',toolbarLabels:{codeLabel:'代码',wrapLabel:'自动换行',unwrapLabel:'取消换行'}},footnotes:'脚注'}
   const CompanionSettings=createCompanionSettings(React,{rpc,markdown:text=>h(require('@deepseek-ai/dsh-client-ui-primitives').MarkdownText,{text,labels:markdownLabels})})
   const DeveloperPanel=createDeveloperPanel(React,{rpc,extra:()=>h(ExtensionPanels)})
+  const IdentitySettings=createIdentitySettings(React,{rpc})
   const avatar=(size=36)=>h('span',{className:'dot-avatar',style:{width:size,height:size}},h(Ring,{size:Math.round(size*.65)}))
   function openDotRow(){
     if(ctx.layout.panelInfo.getSnapshot().activePanelId!==PANEL_ID){view.set({expanded:false});ctx.layout.selectPanel(PANEL_ID)}
@@ -102,6 +106,8 @@ function registerUi(ctx) {
     function backDrawer(){drawerEpoch.current++;setDrawerPath(path=>path.slice(0,-1))}
     useEffect(()=>{if(drawer)drawerHeading.current?.focus({preventScroll:true})},[drawer])
     const [workspace,setWorkspace]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState('')
+    const [identities,setIdentities]=useState([]),[sessionMode,setSessionMode]=useState('run'),[identityId,setIdentityId]=useState(null)
+    const switching=useRef(false)
     const [companionName,setCompanionName]=useState('Orivii'),[preferredName,setPreferredName]=useState(''),[profileDraft,setProfileDraft]=useState({})
     const [creating,setCreating]=useState(true),[plaintext,setPlaintext]=useState(false)
     const [initializing,setInitializing]=useState(true),[inspecting,setInspecting]=useState(true),[workspaceInfo,setWorkspaceInfo]=useState(null)
@@ -133,8 +139,8 @@ function registerUi(ctx) {
       const saved=[...older,...(snapshot?.messages||[])].filter((m,i,all)=>m.chatId===active&&all.findIndex(x=>x.id===m.id)===i)
       return [...saved,...outbox.filter(m=>m.chatId===active&&!saved.some(s=>s.requestId===m.id||s.id===m.serverId)).map(m=>({...m,role:'user',requestId:m.id}))].map(publicBubble).filter(m=>m.text.trim())
     },[older,snapshot?.messages,outbox,active])
-    function fail(e){if(e.code==='locked')clearPrivate();setError(e.message||'连接失败，请重试。')}
-    function clearPrivate(){epoch.current++;unlockToken='';view.clear();setReady(false);setSnapshot(null);setOutbox([]);chatCreation.current=null;draftRef.current='';setOlder([]);setMemories([]);setHits([]);setSource(null);setMemoryEdit(null);setDrawer(null);setDraft('');setPassword('');setConfirm('');setSettings({});setProfileDraft({});setPreferredName('');setCompanionName('Orivii');setRename('');setQuery('')}
+    function fail(e){if(e.code==='stale')return;if(e.code==='locked')clearPrivate();setError(e.message||'连接失败，请重试。')}
+    function clearPrivate(){epoch.current++;unlockToken='';activeRef.current=null;view.clear();setReady(false);setIdentityId(null);setSnapshot(null);setOutbox([]);chatCreation.current=null;draftRef.current='';setOlder([]);setMemories([]);setHits([]);setSource(null);setMemoryEdit(null);setDrawer(null);setMenu(false);setDraft('');setPassword('');setConfirm('');setSettings({});setModels([]);setMorePreferences(false);setProfileDraft({});setPreferredName('');setCompanionName('Orivii');setRename('');setQuery('')}
     useEffect(()=>{view.set({ready,chats:ready?snapshot?.chats||view.get().chats:[],name:ready?snapshot?.settings?.name||'Orivii':'Orivii',eyeAnimation:ready?snapshot?.settings?.eyeAnimation!==false:true})},[ready,snapshot])
     useEffect(()=>{enteredAt.current=Date.now();stickToBottom.current=true;setOlder([]);if(preserveDraftFor.current!==active){draftRef.current='';setDraft('')}preserveDraftFor.current=null;setError('')},[active])
     useEffect(()=>{setOutbox(old=>{const rest=old.filter(m=>!(snapshot?.messages||[]).some(s=>s.requestId===m.id||s.id===m.serverId));return rest.length===old.length?old:rest})},[snapshot?.messages])
@@ -149,7 +155,16 @@ function registerUi(ctx) {
     function changeWorkspace(value){setWorkspace(value);setWorkspaceInfo(null);setInspecting(true);setPlaintext(false);setError('');setPassword('');setConfirm('')}
     useEffect(()=>{
       alive.current=true
-      rpc('status').then(s=>{if(alive.current){setWorkspace(s.workspace);adoptInspection(s);setReady(s.unlocked)}}).catch(fail).finally(()=>{if(alive.current){setInitializing(false);setInspecting(false)}})
+      async function restore(){
+        let restoredWorkspace
+        const previousChat=unlockToken?activeRef.current:null
+        try{const opened=await rpc('resume');if(alive.current)await adoptOpen(opened,previousChat)}catch(e){
+          if(e.code!=='locked')throw e
+          const s=await rpc('status');restoredWorkspace=s.workspace;if(alive.current){setWorkspace(s.workspace);adoptInspection(s);setReady(false)}
+        }
+        const list=await rpc('identities');if(alive.current){setIdentities(list.items);const selected=list.items.find(item=>item.workspace===restoredWorkspace)||list.items.find(item=>item.active);if(selected)setSessionMode(selected.mode)}
+      }
+      restore().catch(e=>{if(alive.current)fail(e)}).finally(()=>{if(alive.current){setInitializing(false);setInspecting(false)}})
       return()=>{alive.current=false;epoch.current++;browseAbort.current?.abort()}
     },[])
     useEffect(()=>{
@@ -207,7 +222,7 @@ function registerUi(ctx) {
       async function poll(){if(polling)return;polling=true;try{await refresh()}catch(e){if(!stopped)fail(e)}finally{polling=false}}
       poll();const timer=running?null:setInterval(poll,1500)
       return()=>{stopped=true;if(timer!==null)clearInterval(timer)}
-    },[ready,active,running?.id])
+    },[ready,active,running?.id,identityId])
     useEffect(()=>{
       if(!ready||!active||running?.chatId!==active||!panelActive)return
       let stopped=false,polling=false,lastRevision=-1,observedRunning=false,lastSnapshotAt=0
@@ -234,20 +249,38 @@ function registerUi(ctx) {
     },[ready,active,running?.id,panelActive])
     useEffect(()=>{if(scroll.current&&stickToBottom.current)scroll.current.scrollTop=scroll.current.scrollHeight},[messages,snapshot?.partial?.text,active])
     function select(id){setActive(id);activeRef.current=id;setOlder([]);setSnapshot(old=>old?{...old,messages:[],partial:null}:old);setError('');draftRef.current='';setDraft('')}
+    async function adoptOpen(result,previousChat=null){
+      if(!alive.current)return
+      clearPrivate();unlockToken=result.token;enteredAt.current=Date.now();setWorkspace(result.workspace);setSessionMode(result.session?.mode||'run')
+      const next=await rpc('snapshot',{chatId:null}),list=await rpc('identities')
+      if(!alive.current)return
+      setSnapshot(next);setIdentities(list.items);setIdentityId(result.identityId);setReady(true)
+      const latest=next.chats.find(c=>c.id===previousChat)||next.chats.filter(c=>!c.archived).sort((a,b)=>b.updatedAt-a.updatedAt)[0]
+      if(latest)select(latest.id)
+    }
+    async function switchIdentity(actionName,data){
+      if(switching.current||busy)throw new Error('请等待当前操作完成。')
+      if(draftRef.current.trim()||outbox.length)throw new Error('请先发送草稿，并处理尚未送达的消息，再切换 Orivii。')
+      const previous=unlockToken
+      switching.current=true;setBusy(true);setError('')
+      try{const result=await rpc(actionName,data);await adoptOpen(result)}catch(e){
+        // A wrong password belongs to the target identity; keep the current one open.
+        if(e.code==='locked'){const current=await rpc('identities');if(current.current)e.code='identity-password'}
+        if(previous!==unlockToken)fail(e)
+        throw e
+      }finally{switching.current=false;if(alive.current)setBusy(false)}
+    }
     async function openVault(){await action(async()=>{
       const detected=await rpc('status',{workspace:workspace.trim()})
       if(detected.state==='incomplete')throw new Error('此目录已有未完成或不兼容的 Orivii 数据，请选择其他目录或恢复原记忆库。')
       if((detected.state==='new')!==creating){adoptInspection(detected);return}
       if(creating&&!plaintext&&password!==confirm)throw new Error('两次密码不一致。')
-      const result=await rpc(creating?'setup':'unlock',{workspace:detected.workspace,password,...(creating?{settings:{name:companionName.trim()||'Orivii'},profile:preferredName.trim()?{preferredName:preferredName.trim()}:{},plaintext,...(plaintext?{plaintextAcknowledgement:'明文没有密码保护'}:{})}:{})})
-      unlockToken=result.token;setPassword('');setConfirm('');setReady(true)
-      const next=await refresh(null)
-      const latest=next.chats.filter(c=>!c.archived).sort((a,b)=>b.updatedAt-a.updatedAt)[0]
-      if(latest)select(latest.id)
+      const result=await rpc(creating?'setup':'unlock',{workspace:detected.workspace,password,sessionMode,...(creating?{settings:{name:companionName.trim()||'Orivii'},profile:preferredName.trim()?{preferredName:preferredName.trim()}:{},plaintext,...(plaintext?{plaintextAcknowledgement:'明文没有密码保护'}:{})}:{})})
+      await adoptOpen(result)
     })}
     async function newChat(){await action(async()=>{const chat=await rpc('createChat',{title:'新的聊天'});select(chat.id);await refresh(chat.id)})}
     function send(){
-      const text=draftRef.current.trim();if(!text||!ready)return
+      const text=draftRef.current.trim();if(!text||!ready||switching.current)return
       const request={text,chatId:activeRef.current,id:crypto.randomUUID(),time:Date.now(),status:'sending'}
       draftRef.current='';setDraft('');setError('');stickToBottom.current=true
       setOutbox(old=>[...old,request]);eyeController.current?.activity('message')
@@ -338,6 +371,7 @@ function registerUi(ctx) {
     if(!ready)return h('div',{className:'dot-page dot-unlock',onClickCapture:animateDisclosure,'data-testid':'dot-locked'},h('style',null,STYLE),
       h('form',{className:'dot-vault-form',onSubmit:e=>{e.preventDefault();openVault()}},avatar(64),h('h1',null,creating?'给 Orivii 一个自己的空间':'打开 Orivii 的记忆'),
         h('p',null,'在这里开始认识彼此。聊天会保存在你选择的工作空间。'),
+        identities.length?h('label',null,'已保存的 Orivii',h('select',{'aria-label':'已保存的 Orivii',value:identities.find(item=>item.workspace===workspace)?.id||'',disabled:initializing||busy,onChange:e=>{const item=identities.find(item=>item.id===e.target.value);if(item){changeWorkspace(item.workspace);setSessionMode(item.mode);if(item.unlocked)action(async()=>adoptOpen(await rpc('resume',{identityId:item.id})))}}},h('option',{value:''},'选择 Orivii'),...identities.map(item=>h('option',{key:item.id,value:item.id},item.name)))):null,
         h('label',null,'工作空间',h('div',{className:'dot-workspace-path'},h('input',{value:workspace,onChange:e=>changeWorkspace(e.target.value),placeholder:'选择文件夹或输入绝对路径',required:true,disabled:initializing||busy||browseBusy,'aria-label':'Orivii 工作空间'}),button('浏览…',chooseDirectory,'dot-text-button',null,initializing||busy||browseBusy))),
         browseBusy&&!browse?h('div',{className:'dot-directory-header',role:'status'},h('span',null,'正在打开系统目录选择器…'),button('取消选择',closeBrowse)):null,
         h('p',{role:'status'},initializing||inspecting?'正在检查记忆库…':workspaceInfo?.state==='new'?'此目录还没有 Orivii 记忆库，设置后即可直接创建。':workspaceInfo?.state==='existing'?(workspaceInfo.encrypted?'已找到记忆库，输入密码即可继续。':'已找到明文记忆库，点击打开即可继续。'):workspaceInfo?.state==='incomplete'?'此目录已有未完成或不兼容的 Orivii 数据，请选择其他目录或恢复原记忆库。':'请选择工作空间目录。'),
@@ -357,6 +391,8 @@ function registerUi(ctx) {
           h('label',{className:'dot-check'},h('input',{type:'checkbox',checked:plaintext,onChange:e=>setPlaintext(e.target.checked)}),'使用明文保存（没有密码保护）')):null,
         !plaintext?h('label',null,'记忆库密码',h('input',{type:'password',value:password,autoComplete:creating?'new-password':'current-password',onChange:e=>setPassword(e.target.value),minLength:creating?10:undefined,maxLength:1024,'aria-label':'记忆库密码'})):null,
         creating&&!plaintext?h('label',null,'再次输入密码',h('input',{type:'password',value:confirm,autoComplete:'new-password',onChange:e=>setConfirm(e.target.value),'aria-label':'确认密码'})):null,
+        h('label',null,'解锁期限',h('select',{'aria-label':'解锁期限',value:sessionMode,onChange:e=>setSessionMode(e.target.value)},h('option',{value:'run'},'本次 DSH 运行'),h('option',{value:'8h'},'每 8 小时验证'),h('option',{value:'24h'},'每 24 小时验证'))),
+        h('small',null,'本次解锁后，刷新或重新打开页面可直接继续。DSH 退出、电脑重启或手动锁定后需重新解锁。'),
         h('p',{className:'dot-security-note'},plaintext?'明文文件可被有目录权限的程序读取。加一个界面密码不能保护明文。':'聊天内容会加密保存，密码不会保存。解锁后，相关内容会交给你选择的模型处理。请妥善保管密码，丢失后无法恢复。'),
         errorBox,h('button',{type:'submit',className:'dot-save',disabled:busy||browseBusy||initializing||inspecting||!workspaceInfo||workspaceInfo.state==='incomplete'||Boolean(browse)},busy?'正在打开…':creating?'创建工作空间':plaintext?'打开记忆库':'解锁')))
     const sourceLinks=entry=>h('div',{className:'dot-memory-sources'},...(entry.sources||[]).map(s=>button('查看原文',()=>showSource(s.id),'dot-source-link')))
@@ -371,7 +407,7 @@ function registerUi(ctx) {
           ...historyRows,working&&snapshot?.partial?.text&&!messages.some(m=>m.id===snapshot.partial.id)?messageRow({id:snapshot.partial.id||'partial',role:'assistant',text:snapshot.partial.text,time:snapshot.partial.time||Date.now(),live:true}):null,
           h(Motion,{show:Boolean(working&&!snapshot?.partial?.text)},thinkingBubble())):working?h('div',{className:'dot-message-column'},thinkingBubble()):h('div',{className:'dot-empty-chat'},h('h2',null,`和${prefs.name}聊聊`),h('p',null,'想说什么，都可以从这里开始。'))),
         lastJob?.error?h('div',{className:'dot-error',role:'status'},lastJob.error):null,errorBox,
-        h('form',{className:'dot-compose',onSubmit:e=>{e.preventDefault();send()}},h('div',{className:'dot-compose-box'},h('textarea',{value:draft,rows:1,maxLength:16000,placeholder:`发消息给${prefs.name}…`,'aria-label':'消息',onChange:e=>{draftRef.current=e.target.value;setDraft(e.target.value)},onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}}),
+        h('form',{className:'dot-compose',onSubmit:e=>{e.preventDefault();send()}},h('div',{className:'dot-compose-box'},h('textarea',{value:draft,disabled:switching.current,rows:1,maxLength:16000,placeholder:`发消息给${prefs.name}…`,'aria-label':'消息',onChange:e=>{draftRef.current=e.target.value;setDraft(e.target.value)},onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}}),
           h('button',{type:'submit',className:'dot-send',disabled:busy||!draft.trim(),'aria-label':'发送消息'},h(Icon,{name:'send'}))),
           h('div',{className:'dot-compose-foot'},h('span',null,'Enter 发送 · Shift + Enter 换行'),h('span',null,'')))),
       h(Motion,{show:Boolean(drawer)},drawer?h('aside',{className:'dot-details dot-memory-details','aria-label':'Orivii 详情'},
@@ -384,12 +420,14 @@ function registerUi(ctx) {
           h('label',null,h('span',null,'模型'),h('select',{value:settings.provider?JSON.stringify([settings.provider,settings.model]):'',onChange:e=>{const [provider,model]=e.target.value?JSON.parse(e.target.value):['',''];setSettings(s=>({...s,provider,model}))}},h('option',{value:''},'使用 DSH 默认模型'),...models.map(m=>h('option',{key:m.provider+'/'+m.id,value:JSON.stringify([m.provider,m.id])},m.provider+' / '+m.name)))),
           (!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?h('label',null,'自定义表达方式',h('textarea',{value:settings.persona||'',onChange:e=>setSettings(old=>({...old,persona:e.target.value}))})):null),
           button('保存设置',()=>action(async()=>{const changes=Object.fromEntries(['name','eyeAnimation','webSearch','provider','model',...((!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?['persona']:[])].filter(key=>settings[key]!==prefs[key]).map(key=>[key,settings[key]]));await rpc('settings',{settings:changes});await refresh();setDrawer(null)}),'dot-save'),
+          button('我的 Orivii',()=>setDrawer('identities')),
           h('hr'),
           h('details',{className:'dot-advanced dot-more-preferences',open:morePreferences,onToggle:e=>setMorePreferences(e.currentTarget.open)},h('summary',null,'更多偏好'),h('div',{className:'dot-preference-links'},
             button('关于你',openProfile),
             snapshot?.extensionAvailable?h(React.Fragment,null,snapshot?.personaAvailable!==false?button('交流方式',()=>setDrawer('persona')):null,button('消息与安静时段',()=>setDrawer('care')),button('数据与权限',()=>setDrawer('privacy'))):button('数据与权限',()=>showMemories('permanent')),button('开发者模式',()=>setDrawer('developer')))),
           selected?h('details',{className:'dot-advanced'},h('summary',null,'当前聊天'),h('label',null,h('span',null,'聊天标题'),h('input',{value:rename,onChange:e=>setRename(e.target.value)})),button('重命名',()=>action(async()=>{await rpc('editChat',{chatId:active,title:rename});await refresh()})),button(selected.archived?'恢复聊天':'归档聊天',()=>action(async()=>{await rpc('editChat',{chatId:active,archived:!selected.archived});await refresh();setDrawer(null)})),h('p',null,'归档只整理列表，不会删除共享记忆。')):null,
-          h('details',{className:'dot-advanced'},h('summary',null,'存储与迁移'),h('p',null,'工作空间：'+snapshot?.workspace),h('p',null,'锁定后可选择另一工作空间。'),button('导入旧版 Dot 聊天',importLegacy),h('p',null,'仅导入旧版聊天气泡，原有 DSH 记录保留。'))):null,
+          h('details',{className:'dot-advanced'},h('summary',null,'存储与迁移'),h('p',null,'工作空间：'+snapshot?.workspace),h('p',null,'在“我的 Orivii”中创建或切换角色，无需重启。锁定后也可打开其他已有目录。'),button('导入旧版 Dot 聊天',importLegacy),h('p',null,'仅导入旧版聊天气泡，原有 DSH 记录保留。'))):null,
+        drawer==='identities'?h(IdentitySettings,{onSwitch:switchIdentity,onError:fail}):null,
         ['persona','care','privacy','tasks'].includes(drawer)?h(CompanionSettings,{key:drawer,section:drawer,onError:fail,onSource:showSource,onMemories:()=>showMemories('permanent')}):null,
         drawer==='developer'?h(DeveloperPanel,{chatId:active,active:panelActive,onError:fail,onSource:showSource}):null,
         drawer==='profile'?h('div',{className:'dot-settings'},
