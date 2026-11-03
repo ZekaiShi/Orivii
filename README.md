@@ -1,84 +1,113 @@
-# Orivii
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/social-preview.png" alt="DSH Orivii — supra than agent. closer than ever." width="960">
+</p>
 
-**会记得你，也会替你办事。** A little personality. A lot of company.
+<p align="center">
+  <a href="https://www.npmjs.com/package/dsh-orivii"><img src="https://img.shields.io/npm/v/dsh-orivii?color=b7a7ed&label=npm&style=flat-square" alt="npm version"></a>
+  <a href="https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml"><img src="https://img.shields.io/badge/DSH_Market-AGI_Exploration-d9e98f?style=flat-square" alt="DSH Market · AGI 探索"></a>
+  <a href="https://github.com/ZekaiShi/Orivii/actions/workflows/ci.yml"><img src="https://github.com/ZekaiShi/Orivii/actions/workflows/ci.yml/badge.svg" alt="Windows and Linux checks"></a>
+  <a href="https://github.com/ZekaiShi/Orivii/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ZekaiShi/Orivii?color=f49b81&style=flat-square" alt="MIT license"></a>
+</p>
 
-[![Orivii — watch the 30-second film](media/preview.gif)](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4)
+<p align="center"><strong>会记得你，也会替你办事。</strong></p>
+<p align="center">在 DeepSeek Harness 里，和一个有表情、有记忆的个人助手相处。<br>聊日常，查资料，记下约定，把明确交代的工作交给后台。</p>
 
-[▶ 观看完整宣传片](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4) · [下载 1.0.1](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.1) · [更新计划](UPDATES.md)
+<p align="center">
+  <a href="#快速开始">开始使用</a> ·
+  <a href="https://github.com/ZekaiShi/Orivii/blob/main/docs/README.md">使用教程</a> ·
+  <a href="https://github.com/ZekaiShi/Orivii/releases">版本下载</a> ·
+  <a href="https://github.com/ZekaiShi/Orivii/blob/main/UPDATES.md">接下来做什么</a> ·
+  <a href="https://github.com/ZekaiShi/Orivii/blob/main/README.en.md">English</a>
+</p>
 
-Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生动的眼睛回应你，在同一工作空间的新聊天中接续记忆，也能查询资料、设置提醒和委托后台工作。
+## 快速开始
 
-![Orivii 的表情](media/expressions.png)
+**已在使用 DSH？** 安装插件、选一个资料目录，就可以开始。模型沿用你在 DSH 中配置的服务。
 
-## 现在可以做什么
+1. **安装。** Web 用户在运行 DSH 的电脑上执行：
 
-- **自然聊天**：独立聊天列表、富文本气泡、自定义名字与称呼，支持连续发送。
-- **生动反馈**：表情、眨眼、待机和唤醒动作，支持系统减少动态效果设置。
-- **共享记忆**：跨聊天接续话题，检索以前的对话，并允许修正记错的内容。
-- **联网与后台工作**：查询公开资料，处理你明确委托的工作，再将结果带回聊天。
-- **提醒与关心**：用自然语言约定提醒，支持取消和改期。
-- **本地工作空间**：支持密码加密、锁定及重新解锁。
-- **多个 Orivii**：在设置中创建和切换不同角色，分别保存聊天、记忆和相处方式。
-- **解锁期限**：本次 DSH 运行、8 小时或 24 小时；期限内刷新页面或切换已解锁角色无需重复输入密码。
+   ```sh
+   dsh plugin --profile web add dsh-orivii@1.0.1
+   ```
 
-## 安装
+   Desktop 用户在应用内插件管理中添加 **`dsh-orivii@1.0.1`**，按提示重新启动。
+2. **打开。** 点击左侧 **Orivii**，选择工作空间，设置名字与解锁密码。
+3. **认识一下。** 发一句「叫我小林就好，平时说话简短一点」，开始你们的第一段对话。
 
-需要 Node.js **>=24.2.0**、兼容的 DSH **0.2.1** 系列，以及已经配置好的模型。
+需要 Node.js **≥24.2.0**、兼容的 DSH **0.2.1** 系列和可用模型。**npm 包名是 `dsh-orivii`**；`dsh-companion` 是其他项目，别装错。
 
-首次 npm 发布完成后，Web 可用以下命令安装预构建包，无需本地编译；发布前请使用下方的 GitHub Release 安装方式：
+[Windows PowerShell / Linux 安装步骤、Market 与离线安装 →](https://github.com/ZekaiShi/Orivii/blob/main/docs/getting-started.md)
 
-```sh
-dsh plugin --profile web add dsh-orivii@1.0.1
-```
+## 先感受一下
 
-npm 包名为 **`dsh-orivii`**。npm 上的 `dsh-companion` 属于另一个项目，请勿用它安装 Orivii。
+[![Orivii 动态预览：表情、对话与记忆的概念演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/preview.gif)](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4)
 
-也可以安装 GitHub Release 中的预构建包：
+<p align="center"><a href="https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4">▶ 观看 30 秒宣传片</a></p>
 
-```sh
-dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.1/dsh-companion-1.0.1.tgz
-```
+*宣传片与下方图片使用原创演示场景，不是真实聊天录屏；当前能力以本页说明为准。*
 
-也可以从 [Releases](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.1) 下载安装包：
+| 日常相处 | 把事情接着做 |
+| --- | --- |
+| **像私信一样聊天**：独立聊天列表、连续发送、富文本气泡。 | **需要时查资料**：使用 DSH 的联网能力，把查询结果带回对话。 |
+| **眼睛会回应你**：眨眼、思考、开心、困倦与唤醒，支持减少动态效果。 | **用一句话约定提醒**：创建、查询、改期和取消，到时在聊天中提醒。 |
+| **新聊天也能接话**：同一角色共享近期对话与可检索历史。 | **把工作交给后台**：通过 DSH 的 Agent 执行明确委托，完成后带回结果。 |
+| **按你的习惯相处**：名字、称呼、表达方式与可纠正的偏好。 | **资料由你保管**：本地工作空间，可选密码加密，支持备份与迁移。 |
 
-```sh
-dsh plugin --profile web add ./dsh-companion-1.0.1.tgz
-```
+![Orivii 的好奇、惊讶与亲近表情概念图](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/expressions.png)
 
-Desktop 请通过应用内插件管理添加 `dsh-orivii@1.0.1`、上述完整 Release 地址或下载的安装包。安装完成后按提示重新启动并刷新页面。
+联网需要可用的 DSH 搜索服务；后台工作取决于宿主已配置的工具与权限。提醒需要 DSH 持续运行、对应角色保持解锁，不是关机也能响的系统闹钟。
 
-从旧 GitHub 安装包切换到 npm 包时，先备份各角色工作空间，在插件管理中停用旧 Orivii，再安装新版；避免同时启用两份 Orivii。既有资料位置和加密格式保持兼容。DSH 重启后需要重新解锁。
+## 1.0.1 · 多一种相处方式
 
-首次打开 Orivii 时，选择工作空间、设置名字并创建密码，然后开始聊天。路径指向 DSH 后端所在的电脑。
+![多角色示意：Orivii、阿栗、小舟拥有各自独立的聊天与记忆](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/roles.svg)
 
-## 多个 Orivii 与解锁
+打开 **更多 → 设置 → 我的 Orivii**，创建和切换另一个角色。不同角色各自保存聊天、记忆和偏好，**切换无需重启 DSH**。
 
-打开“设置 → 我的 Orivii”，可以创建另一个角色并填写名字、最初的相处方式和密码。资料目录会自动分配，原角色的聊天和记忆不会复制过去。创建和切换无需重启 DSH。
+解锁期限可选 **本次 DSH 运行 / 8 小时 / 24 小时**。期限内刷新页面、切换回已解锁角色，不必重复输密码。手动锁定、DSH 退出或电脑重启后需要重新解锁。
 
-- 每个加密角色有自己的密码。首次解锁后，期限内切换回来无需再次输入；明文模式不提供密码保护。
-- 解锁期限可选“本次 DSH 运行”“每 8 小时验证”“每 24 小时验证”。刷新和切换不会延长期限；延长策略在下次输入密码后生效。
-- 关闭页面不会锁定记忆库。手动“锁定”会锁住当前 Host 全部角色；DSH 退出或电脑重启后重新解锁。Web 与 Desktop 分别管理解锁状态。
-- 后台文字任务继续留在原角色中处理。存在未发送草稿或未送达消息时，会先提示处理这些内容再切换。
-- 密码、解密密钥和 Orivii 访问令牌不写入浏览器存储。角色选择列表保存名字、资料路径和验证策略；聊天与相处方式沿用各角色的加密选择。
+[跟着做：创建第二个 Orivii、设置解锁期限 →](https://github.com/ZekaiShi/Orivii/blob/main/docs/identities.md)
 
-## 使用须知
+## 不知道先聊什么？
 
-- 同一工作空间的聊天共享记忆，不同工作空间不会自动共享；记忆可能遗漏或出错。
-- 模型与搜索使用 DSH 中配置的服务，相应服务可能收费。
-- 本地保存不等于离线处理：模型会接收回答所需的上下文，联网时会发送查询词。
-- 加密保护磁盘上的资料。请妥善保存密码；明文模式不提供密码保密。
-- 后台工作需要 DSH Host 运行且工作空间已解锁。
-- 升级前关闭或锁定访问该工作空间的 Host，并备份用户资料。
-- 当前仍有未覆盖的宿主、模型和平台组合，欢迎反馈可复现的问题。
+下面是可复制的体验提示词，不是预先写好的模型回答。
 
-宣传视频使用原创演示对话与场景，不是真实用户聊天录屏。素材来源见 [media/README.md](media/README.md)。
+| 想体验 | 发给 Orivii |
+| --- | --- |
+| 称呼 | 「叫我小林。平时简短温柔一些，讨论代码时直接一点。」 |
+| 接着聊 | 先说「周末的阅读计划先定科幻小说」，新建聊天后问「接着刚才的阅读计划聊吧」。 |
+| 查资料 | 「查一下这个项目最近一次官方更新，给我日期和原文链接；找不到就直说。」再附上项目链接。 |
+| 提醒 | 「10 分钟后提醒我起来活动一下。」再问「我现在有哪些提醒？」 |
+| 改期 | 「刚才活动的提醒改到 20 分钟后。」或「取消刚才那条活动提醒」。 |
+| 办事 | 「在工作空间创建一个 hello.html，内容是欢迎使用 Orivii。完成后告诉我文件位置。」 |
 
-## 参与
+记忆是可追溯的对话记录与整理结果，不代表每次请求都会带上全部历史。回答可能有遗漏，重要结论请核对出处。[日常使用与能力条件 →](https://github.com/ZekaiShi/Orivii/blob/main/docs/usage.md)
 
-[更新记录](CHANGELOG.md) · [未来计划](UPDATES.md) · [贡献说明](CONTRIBUTING.md) · [安全反馈](SECURITY.md)
+## 教程与帮助
 
-Issue 请提供版本、环境、最短复现和预期结果，优先使用虚构内容，不要提交密码、密钥或真实聊天资料。
+| 你现在想做什么 | 从这里开始 |
+| --- | --- |
+| 第一次安装，发出第一条消息 | [快速入门](https://github.com/ZekaiShi/Orivii/blob/main/docs/getting-started.md) |
+| 调整称呼、聊天方式，使用搜索与提醒 | [日常使用](https://github.com/ZekaiShi/Orivii/blob/main/docs/usage.md) |
+| 创建多个角色，减少重复解锁 | [多个 Orivii 与解锁](https://github.com/ZekaiShi/Orivii/blob/main/docs/identities.md) |
+| 升级、换电脑、保护聊天资料 | [数据与迁移](https://github.com/ZekaiShi/Orivii/blob/main/docs/data-and-privacy.md) |
+| 安装失败、没有回复、提醒没来 | [常见问题与排错](https://github.com/ZekaiShi/Orivii/blob/main/docs/troubleshooting.md) |
 
-## 许可
+## 一起把它完善
 
-[MIT](LICENSE)。本项目是独立社区项目，不隶属于 DeepSeek、OpenAI 或 Apple。
+**现在可以使用：** 文字聊天、表情、跨聊天记忆、联网查询、自然语言提醒、后台委托、多角色与解锁期限。
+
+**接下来完善：** 聊天与任务稳定性、文件交付、知识纠错与召回、Office 和科研工作流。可打断语音、同步陪看与更多官方消息渠道仍在计划中，**不属于 1.0.1 的可用功能**。
+
+[查看完整更新计划](https://github.com/ZekaiShi/Orivii/blob/main/UPDATES.md) · [查看已发布更新](https://github.com/ZekaiShi/Orivii/blob/main/CHANGELOG.md)
+
+欢迎告诉我们哪里不顺手，或提交一个小范围 PR。反馈时提供版本、环境和最短复现；请用虚构内容，不要上传密码、密钥或真实记忆库。
+
+[报告问题](https://github.com/ZekaiShi/Orivii/issues/new?template=bug_report.yml) · [提出建议](https://github.com/ZekaiShi/Orivii/issues/new?template=feature_request.yml) · [参与贡献](https://github.com/ZekaiShi/Orivii/blob/main/CONTRIBUTING.md)
+
+## 关于数据与许可
+
+聊天与记忆保存在你选择的工作空间，可选择密码加密。**本地保存不等于离线处理**：回答所需的上下文仍会发送给你配置的模型，联网查询会发送必要查询词。密码遗失无法恢复加密资料。
+
+[隐私与安全说明](https://github.com/ZekaiShi/Orivii/blob/main/SECURITY.md) · [宣传素材与许可](https://github.com/ZekaiShi/Orivii/blob/main/media/README.md) · [MIT License](https://github.com/ZekaiShi/Orivii/blob/main/LICENSE)
+
+Orivii 是独立社区项目，不隶属于 DeepSeek、OpenAI 或 Apple。

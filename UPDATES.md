@@ -1,6 +1,8 @@
 # 接下来，我们一起把 Orivii 完善
 
-更新：2026-11-03。以下是计划，不是当前功能承诺；顺序会根据 Issue、复现和 PR 调整。
+更新：2026-11-04。以下是计划，不是当前功能承诺；顺序会根据 Issue、复现和 PR 调整。
+
+[返回主页](README.md) · [使用教程](docs/README.md) · [已发布更新](CHANGELOG.md)
 
 ## 1.0.1 已完成
 
@@ -41,4 +43,4 @@
 
 计划根据实际使用反馈调整，完成的功能会记录在 CHANGELOG.md。
 
-欢迎先用虚构内容测试，再提交最短复现。具体开发编号、依赖和完成标准见 [ROADMAP.md](ROADMAP.md)。
+欢迎先用虚构内容测试，再提交最短复现。安装和使用问题可先看 [排错指南](docs/troubleshooting.md)，功能建议欢迎提交 [Issue](https://github.com/ZekaiShi/Orivii/issues/new?template=feature_request.yml)。
