@@ -34,7 +34,7 @@ async function collect(relative){
 }
 for(const item of allowed)await collect(item)
 const manifest=JSON.parse(files.find(file=>file.path==='package.json').bytes.toString('utf8'))
-if(manifest.name!=='dsh-companion'||manifest.license!=='MIT')throw new Error('Unexpected public package identity')
+if(manifest.name!=='dsh-orivii'||manifest.license!=='MIT')throw new Error('Unexpected public package identity')
 const runtimeAllowed=new Set(['index.js','src','dsh','cordis.patch.yml','README.md','CHANGELOG.md','UPDATES.md','ROADMAP.md','SECURITY.md','LICENSE'])
 if(!manifest.files?.length||manifest.files.some(name=>!runtimeAllowed.has(name)))throw new Error('Review the npm runtime file allowlist before export')
 

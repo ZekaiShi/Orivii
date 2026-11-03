@@ -1,5 +1,5 @@
 {
-  "name": "dsh-companion",
+  "name": "dsh-orivii",
   "version": "1.0.1",
   "description": "Orivii: an expressive personal assistant for DeepSeek Harness with shared memory, proactive reminders and background work",
   "type": "module",
@@ -51,7 +51,12 @@
     }
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "devDependencies": {
+    "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
     "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
     "@deepseek-ai/dsh-host-directory-picker-auto": "0.2.1-rc.2",
     "@deepseek-ai/dsh-host-directory-picker-native": "0.2.1-rc.2",

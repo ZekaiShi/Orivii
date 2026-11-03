@@ -42,18 +42,18 @@ export function createDotRemote(z) {
       role:z.enum(['user','assistant']),text:z.string().max(200000),time:z.number().optional(),seq:z.number().optional(),
     })).max(1000)}),
   ])
-  const codec={mode:'strict',typeSymbol:'dsh-companion#DotCommandRequest',create:()=>request}
+  const codec={mode:'strict',typeSymbol:'dsh-orivii#DotCommandRequest',create:()=>request}
   const result=z.discriminatedUnion('ok',[
     z.strictObject({ok:z.literal(true),value:z.unknown()}),
     z.strictObject({ok:z.literal(false),error:z.strictObject({code:z.string(),message:z.string()})}),
   ])
   return {
-    package:'dsh-companion',
+    package:'dsh-orivii',
     descriptors:[{
-      id:'dsh-companion#dotCompanion/command',service:'dotCompanion',namespace:'dotCompanion',
+      id:'dsh-orivii#dotCompanion/command',service:'dotCompanion',namespace:'dotCompanion',
       method:'command',invocation:{kind:'direct'},
       parameters:[{name:'request',wire:'request',source:'json',codec}],
-      result:{mode:'strict',typeSymbol:'dsh-companion#DotCommandResult',create:()=>result},
+      result:{mode:'strict',typeSymbol:'dsh-orivii#DotCommandResult',create:()=>result},
     }],
   }
 }

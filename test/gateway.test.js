@@ -11,6 +11,8 @@ import {z} from 'zod'
 import {createDotRemote} from '../src/protocol.js'
 import {apply,DotService} from '../src/host.js'
 import {MarkdownText} from './markdown-stub.js'
+import {loadClientBundle} from './client-loader.js'
+import metadata from '../package.json' with {type:'json'}
 
 async function installed(name,entry='index.js') {
   // Resolve declared development dependencies through their public exports.
@@ -55,10 +57,7 @@ test('built Orivii activates through actual DSH Client Remote and Host Gateway; 
       await assert.rejects(()=>client.remote.$mount(old),/has no strict codec/)
       client.provide('slots',{inject(_name,fn){fn()},register(options,component){registrations.push({options,component});return()=>{}}})
       client.provide('layout',{})
-      let plugin
-      vm.runInNewContext(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),{
-        window:{__ModuleLoader__:{load({factory}){plugin=factory(name=>{if(name==='react')return React;if(name==='@deepseek-ai/dsh-client-ui-primitives')return {MarkdownText};if(name==='zod')return {z};throw new Error('Unexpected dependency')})}}},
-      })
+      const plugin=await loadClientBundle(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),metadata.name)
       await client.plugin(plugin)
       assert.equal(registrations.length,2)
       assert.equal(registrations.find(r=>r.options.name==='sidebar.panellist').options.label,'Orivii')
