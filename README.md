@@ -25,7 +25,7 @@ Orivii 是 DeepSeek Harness 中的个人助手。像私信一样聊天，用生�
 
 需要 Node.js **>=24.2.0**、兼容的 DSH **0.2.1** 系列，以及已经配置好的模型。
 
-Web 可从 npm 安装预构建包，无需本地编译：
+首次 npm 发布完成后，Web 可用以下命令安装预构建包，无需本地编译；发布前请使用下方的 GitHub Release 安装方式：
 
 ```sh
 dsh plugin --profile web add dsh-orivii@1.0.1
