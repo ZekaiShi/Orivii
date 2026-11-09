@@ -9,8 +9,8 @@
   <a href="https://github.com/ZekaiShi/Orivii/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ZekaiShi/Orivii?color=f49b81&style=flat-square" alt="MIT license"></a>
 </p>
 
-<p align="center"><strong>会记得你，也会替你办事。</strong></p>
-<p align="center">在 DeepSeek Harness 里，和一个有表情、有记忆的个人助手相处。<br>聊日常，查资料，记下约定，把明确交代的工作交给后台。</p>
+<p align="center"><strong>让 DSH 住进一个有表情的 AI 搭子。</strong></p>
+<p align="center"><strong>聊过的事接着聊，交代的活在后台跑。</strong><br>会对你眨眼，记下你的习惯；一句话约定提醒，需要办事时接上 DSH 的工具。<br>给它取个名字，从第一句话开始认识彼此。</p>
 
 <p align="center">
   <a href="#快速开始">开始使用</a> ·
@@ -42,9 +42,15 @@
 
 [![Orivii 动态预览：表情、对话与记忆的概念演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/preview.gif)](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4)
 
-<p align="center"><a href="https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4">▶ 观看 30 秒宣传片</a></p>
+<p align="center"><a href="https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4">▶ 观看 60 秒宣传片</a></p>
 
-*宣传片与下方图片使用原创演示场景，不是真实聊天录屏；当前能力以本页说明为准。*
+*动图摘自 60 秒宣传片；下方四张图截自 1.0.1 功能教学视频，均为原创演示场景。*
+
+| 像私信一样聊天 | 新聊天，也能接着说 |
+| --- | --- |
+| ![私信式对话教学演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-chat.png) | ![跨聊天记录与原文查询教学演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-memory.png) |
+| **把事情交给后台** | **不止一个 Orivii** |
+| ![后台工作与结果返回教学演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-work.png) | ![多角色切换教学演示](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-identities.png) |
 
 | 日常相处 | 把事情接着做 |
 | --- | --- |

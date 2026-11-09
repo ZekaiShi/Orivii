@@ -12,7 +12,7 @@ const within=(parent,child)=>{const relative=path.relative(parent,child);return 
 if(!checkOnly&&(within(root,target)||within(target,root)))throw new Error('Export must be separate from the source directory')
 
 // Explicit release boundary: do not enumerate or copy the parent workspace.
-const allowed=['.github','.gitignore','CONTRIBUTING.md','CHANGELOG.md','UPDATES.md','media','docs','LICENSE','README.md','README.en.md','ROADMAP.md','SECURITY.md','cordis.patch.yml','index.js','package.json','package-lock.json','src','dsh','scripts','test']
+const allowed=['.github','.gitignore','CONTRIBUTING.md','CHANGELOG.md','UPDATES.md','media','screenshots.json','docs','LICENSE','README.md','README.en.md','ROADMAP.md','SECURITY.md','cordis.patch.yml','index.js','package.json','package-lock.json','src','dsh','scripts','test']
 const optional=new Set(['package-lock.json'])
 const files=[]
 const forbidden=/(^|\/)(?:node_modules|private|private-core|\.git|\.dsh-test|\.dot-memory)(\/|$)|(?:\.log|\.tgz|\.dotcard|\.map)$|(^|\/)\.env(?:\.|$)/i

@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/social-preview.png" alt="DSH Orivii — supra than agent. closer than ever." width="960">
 </p>
 
-<p align="center"><strong>A little personality. A lot of company.</strong><br>An expressive personal assistant inside DeepSeek Harness.</p>
+<p align="center"><strong>Give your DSH an AI companion with a face.</strong><br><strong>Keep the conversation going. Let the work run in the background.</strong><br>Expressive eyes, shared chat history, reminders in your own words, and access to DSH tools.</p>
 
 <p align="center"><a href="README.md">中文</a> · <a href="docs/README.md">User guide (Chinese)</a> · <a href="https://www.npmjs.com/package/dsh-orivii">npm</a> · <a href="https://github.com/ZekaiShi/Orivii/releases">Releases</a> · <a href="UPDATES.md">What's next</a></p>
 
@@ -22,7 +22,13 @@ Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm pack
 
 [![Animated Orivii concept preview](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/preview.gif)](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4)
 
-The film uses original demonstration scenes, not a recording of the product or real user conversations.
+[Watch the full 60-second film](https://github.com/ZekaiShi/Orivii/blob/main/media/orivii-film.mp4). The animated preview and tutorial frames below use original demonstration scenes.
+
+| A place to talk | Pick up a conversation |
+| --- | --- |
+| ![Chat tutorial scene](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-chat.png) | ![Shared history tutorial scene](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-memory.png) |
+| **Background work** | **Multiple companions** |
+| ![Background tasks tutorial scene](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-work.png) | ![Identity switching tutorial scene](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/market-identities.png) |
 
 - **A place to talk.** Independent chats, rich text bubbles, consecutive messages, and expressive eye animations.
 - **A conversation that carries on.** Recent dialogue and searchable history are shared across chats within one identity. Recall can be incomplete; important details should be checked against the original conversation.
