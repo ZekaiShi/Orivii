@@ -8,6 +8,8 @@
 
 命令行安装需要 Node.js **24.2.0 或更高的兼容版本**，以及兼容的 DSH **0.2.1** 系列。未安装 DSH 时，先按 [DSH 官方说明](https://github.com/deepseek-ai/deepseek-harness) 完成安装和模型配置。
 
+1.0.2 的安装示例使用 GitHub Release 地址。可用 npm 版本可用 `npm.cmd view dsh-orivii versions --registry=https://registry.npmjs.org/` 查询；若注册表尚无 1.0.2，请使用下方 Release 方式。
+
 ## 1. 选择你的安装方式
 
 任选一种，不要同时启用多份 Orivii。
@@ -17,7 +19,7 @@
 打开应用内的插件管理，添加以下 npm 包：
 
 ```text
-dsh-orivii@1.0.1
+https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```
 
 按宿主提示完成安装并重新启动。Desktop 与 Web 使用各自的插件配置；在 Web 中安装，不代表 Desktop 也已安装。
@@ -29,7 +31,7 @@ dsh-orivii@1.0.1
 ```powershell
 node --version
 dsh.cmd --version
-dsh.cmd plugin --profile web add dsh-orivii@1.0.1
+dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```
 
 如果提示找不到 `dsh.cmd`，先确认 DSH 已安装、命令所在目录在 PATH 中，再重新打开 PowerShell。仅安装了 Desktop 的用户可使用上面的应用内入口。
@@ -41,7 +43,7 @@ dsh.cmd plugin --profile web add dsh-orivii@1.0.1
 ```sh
 node --version
 dsh --version
-dsh plugin --profile web add dsh-orivii@1.0.1
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```
 
 在 DSH 后端所在的环境执行。例如 DSH 运行在 Linux 服务器上，就在该服务器安装；浏览器本身不负责安装插件。
@@ -58,20 +60,20 @@ dsh plugin --profile web add dsh-orivii@1.0.1
 Web 安装 Release 地址：
 
 ```sh
-dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.1/dsh-companion-1.0.1.tgz
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```
 
 Windows PowerShell 将命令开头的 `dsh` 改为 `dsh.cmd` 即可。
 
-也可以在 [v1.0.1 Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.1) 下载 `dsh-companion-1.0.1.tgz`，然后从保存文件的目录安装：
+也可以在 [v1.0.2 Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.2) 下载 `dsh-orivii-1.0.2.tgz`，然后从保存文件的目录安装：
 
 ```powershell
-dsh.cmd plugin --profile web add .\dsh-companion-1.0.1.tgz
+dsh.cmd plugin --profile web add .\dsh-orivii-1.0.2.tgz
 ```
 
 Desktop 可在插件管理中添加完整 Release 地址或选择下载的安装包。
 
-Release 附件保留了早期文件名 `dsh-companion-1.0.1.tgz`；它来自 **ZekaiShi/Orivii**。npm 包必须使用 **`dsh-orivii`**，npm 上同名的 `dsh-companion` 属于另一个项目。
+本次 Release 附件为 `dsh-orivii-1.0.2.tgz`，来自 **ZekaiShi/Orivii**。npm 包必须使用 **`dsh-orivii`**，npm 上同名的 `dsh-companion` 属于另一个项目。
 
 </details>
 

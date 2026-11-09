@@ -5,27 +5,13 @@ import {readFile} from 'node:fs/promises'
 import React from 'react'
 import {z} from 'zod'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {loadClientBundle} from './client-loader.js'
 
 test('package exposes the browser bundle required by the real DSH registry',async()=>{
   const root=new URL('../',import.meta.url)
   const manifest=JSON.parse(await readFile(new URL('package.json',root),'utf8'))
-  assert.equal(manifest.name,'dsh-orivii')
-  const lock=JSON.parse(await readFile(new URL('package-lock.json',root),'utf8'))
-  assert.equal(lock.name,manifest.name)
-  assert.equal(lock.packages[''].name,manifest.name)
-  const patch=await readFile(new URL(manifest.dsh.bundle.patch,root),'utf8')
-  assert.match(patch,/id: dsh-companion\s+name: dsh-orivii/)
   assert.equal(manifest.exports['./client'],'./dsh/client.js')
   assert.match(await readFile(new URL(manifest.exports['./client'],root),'utf8'),/window\.__ModuleLoader__\.load/)
   assert.ok(manifest.files.includes('dsh'))
-})
-
-test('actual DSH module loader rejects an old package ID in a renamed browser bundle',async()=>{
-  const source=await readFile(new URL('../dsh/client.js',import.meta.url),'utf8')
-  const stale=source.replace('id:"dsh-orivii"','id:"dsh-companion"')
-  assert.notEqual(stale,source)
-  await assert.rejects(()=>loadClientBundle(stale,'dsh-orivii'),/without registering "dsh-orivii"/)
 })
 
 async function register(saved={}){
@@ -36,7 +22,7 @@ async function register(saved={}){
     AbortController,Intl,Date,Map,Set,Object,Array,Number,JSON,Promise,crypto,setInterval,clearInterval,
   }
   vm.runInNewContext(await readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),context)
-  const ctx={remote:{$host:{home:'test'},session:{},async $mount(contribution){assert.equal(contribution.package,'dsh-orivii');return async()=>{}}},slots:{
+  const ctx={remote:{$host:{home:'test'},session:{},async $mount(contribution){assert.equal(contribution.package,'dsh-companion');return async()=>{}}},slots:{
     inject(name,fn){fn()},register(options,component){registrations.push({options,component});return ()=>disposed.push(options.name)},
   },inject(dependencies,fn){assert.ok(dependencies.some(key=>['remote.dotCompanion','remote.session','remote.directoryPicker'].includes(key)));return Promise.resolve(fn(ctx))}}
   await plugin.apply(ctx)

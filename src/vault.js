@@ -89,10 +89,20 @@ export class Vault {
     cipher.setAuthTag(Buffer.from(value.tag,'base64'))
     return JSON.parse(Buffer.concat([cipher.update(Buffer.from(value.data,'base64')),cipher.final()]).toString('utf8'))
   }
-  ext() { return this.meta.encrypted ? '.json.enc' : '.json' }
+  ext() { this.requireOpen();return this.meta.encrypted ? '.json.enc' : '.json' }
+  async head(){
+    // Some host filesystems (including Windows mounts accessed through WSL)
+    // briefly report ENOENT during replacement. Retry reads, never recreate
+    // HEAD or select an uncommitted generation.
+    for(let attempt=0;;attempt++){
+      this.requireOpen()
+      try{return validId((await fs.readFile(path.join(this.root,'HEAD'),'utf8')).trim())}
+      catch(error){if(error.code!=='ENOENT'||attempt>=4)throw error;await new Promise(resolve=>setTimeout(resolve,10*(attempt+1)))}
+    }
+  }
   async read(attempt=0) {
     this.requireOpen()
-    const id = validId((await fs.readFile(path.join(this.root, 'HEAD'),'utf8')).trim())
+    const id = await this.head()
     const state = {}
     try {
       await Promise.all(['catalog',...LAYERS].map(async name=>{
@@ -100,7 +110,7 @@ export class Vault {
         state[name]=this.decode(text,`${id}/${name}`)
       }))
     } catch(e) {
-      if(e.code==='ENOENT'&&attempt<3&&(await fs.readFile(path.join(this.root,'HEAD'),'utf8')).trim()!==id)return this.read(attempt+1)
+      if(e.code==='ENOENT'&&attempt<3&&await this.head()!==id)return this.read(attempt+1)
       throw e
     }
     return state

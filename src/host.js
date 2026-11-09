@@ -6,21 +6,28 @@ import {promises as fs} from 'node:fs'
 import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto'
 import {Vault,DotError,atomicWrite,validId} from './vault.js'
 import {DotEngine} from './engine.js'
-import {MEMORY_DEFAULTS,settingsOf,memoryStats,appendBubble,rebalance,searchArchive,refOf} from './memory.js'
+import {MEMORY_DEFAULTS,LEGACY_DEFAULT_PERSONA,settingsOf,memoryStats,appendBubble,rebalance,searchArchive,refOf} from './memory.js'
 import {profileOf,editProfile} from './profile.js'
 import {createDotRemote} from './protocol.js'
 import {searchWeb} from './web.js'
 import {loadExtension} from './extension.js'
 import {workspaceBridge} from './work.js'
-import {publicBubble} from './expression.js'
+import {responseBubble,responseText} from './response-policy.js'
+import {CompanionMedia} from './media.js'
+import {liveSettings,updateLiveSettings} from './live-settings.js'
 import {IdentityManager} from './identities.js'
+import {attachFrameInput} from './frame-input.js'
+import {Exploration} from './exploration.js'
+import {experienceOf,readExperience} from './experience.js'
+import {discoverTools} from './capabilities.js'
+import {biliConnection,availableBiliTools,checkBiliConnection} from './bili.js'
 import metadata from '../package.json' with {type:'json'}
 
 const DOT_REMOTE=createDotRemote(z)
 
 export class DotHost {
   constructor(services,{pointer=path.join(process.env.DSH_HOME||path.join(homedir(),'.dsh'),'dot','workspace.json'),identities,now=Date.now}={}) {
-    this.services=services;this.pointer=pointer;this.vault=null;this.engine=null;this.tokens=new Set();this.developerTokens=new Set();this.developerTimers=new Map();this.transition=Promise.resolve();this.failedUnlocks=0;this.nextUnlock=0
+    this.services=services;this.pointer=pointer;this.vault=null;this.engine=null;this.tokens=new Set();this.developerTokens=new Set();this.developerTimers=new Map();this.transition=Promise.resolve();this.failedUnlocks=0;this.nextUnlock=0;this.liveController=new AbortController()
     this.identities=identities||new IdentityManager(this,{now,create:()=>new DotHost(services,{pointer:this.pointer,identities:this.identities,now})})
   }
   developerAccess(token,enabled){
@@ -75,6 +82,7 @@ export class DotHost {
           if(state.catalog.settings.persona===oldPersona)state.catalog.settings.persona=MEMORY_DEFAULTS.persona
           state.catalog.settings=settingsOf({},state.catalog.settings);state.catalog.companionProfileVersion=1
         }
+        if(state.catalog.settings.persona===LEGACY_DEFAULT_PERSONA)state.catalog.settings.persona=MEMORY_DEFAULTS.persona
         if(!state.catalog.companionBrandVersion){
           if(state.catalog.settings.name==='Dot')state.catalog.settings.name=MEMORY_DEFAULTS.name
           state.catalog.companionBrandVersion=1
@@ -87,6 +95,10 @@ export class DotHost {
       })
       await this.engine.extension?.start()
       await this.engine.research?.start()
+      if(this.liveController.signal.aborted)this.liveController=new AbortController()
+      this.media=new CompanionMedia({vault:candidate,services:this.services,key:()=>'',engine:this.engine,...this.services.mediaOptions})
+      this.engine.media=this.media
+      this.exploration=new Exploration({vault:candidate,engine:this.engine,services:this.services});this.exploration.start()
     } else candidate.close()
     await fs.mkdir(path.dirname(this.pointer),{recursive:true,mode:0o700})
     await atomicWrite(this.pointer,JSON.stringify({workspace:this.vault.workspace}))
@@ -98,6 +110,7 @@ export class DotHost {
     try {
       if(!request||typeof request!=='object'||Array.isArray(request)||JSON.stringify(request).length>2000000)throw new DotError('请求格式错误或过大。')
       // Owner-only public connectivity check; no vault data or arbitrary input.
+      if(request.action==='capabilities')return {ok:true,value:discoverTools(this.services,request.query||{},{directNames:availableBiliTools(this.services).map(t=>t.name)})}
       if(request.action==='webCheck'){
         const result=await searchWeb(this.services.web,'DeepSeek Harness official documentation')
         return {ok:true,value:{provider:result.provider,sources:result.sources.map(({url,title})=>({url,title})),retrievedAt:result.retrievedAt}}
@@ -124,17 +137,30 @@ export class DotHost {
       const at=request.beforeId?refs.findIndex(m=>m.id===request.beforeId):refs.length
       if(at<0)throw new DotError('找不到分页位置。')
       refs=refs.slice(Math.max(0,at-100),at)
-      messages=(await Promise.all(refs.map(m=>this.vault.message(m.id)))).map(publicBubble).filter(m=>m.text.trim())
+      messages=(await Promise.all(refs.map(m=>this.vault.message(m.id)))).map(m=>responseBubble(this.vault,m)).filter(m=>m.text.trim())
     }
     return {chatId:chatId??null,workspace:this.vault.workspace,encrypted:this.vault.meta.encrypted,settings:state.catalog.settings,profile:profileOf(state),revision:state.catalog.revision,
       chats:state.catalog.chats,stats:memoryStats(state),messages,jobs:state.catalog.jobs.slice(-20).map(({id,chatId,status,kind,startedAt,finishedAt,error})=>({id,chatId,status,kind,startedAt,finishedAt,error})),partial:this.engine.partial.get(chatId)||null,backgroundPhase:this.engine.progress(chatId).backgroundPhase,
-      presentationEvents:this.engine.presentationEvents.get(chatId)||[],extensionAvailable:Boolean(this.engine.extension),personaAvailable:Boolean(this.engine.extension)&&this.engine.extension.personaAvailable!==false,totalMessages:state.catalog.messages.filter(m=>m.chatId===chatId).length}
+      presentationEvents:this.engine.presentationEvents.get(chatId)||[],live:{media:this.media?.status()},extensionAvailable:Boolean(this.engine.extension),personaAvailable:Boolean(this.engine.extension)&&this.engine.extension.personaAvailable!==false,totalMessages:state.catalog.messages.filter(m=>m.chatId===chatId).length}
   }
   async dispatch(r) {
     switch(r.action) {
+      case 'modelProbe':return this.engine.probeModel(AbortSignal.any([this.liveController.signal,AbortSignal.timeout(55000)]),{roundtrip:r.roundtrip===true,videoId:r.videoId})
+      case 'biliConnection':return checkBiliConnection(this.services,{signal:this.liveController.signal,verify:(await this.vault.read()).catalog.settings.webSearch!==false})
       case 'progress':return this.engine.progress(validId(r.chatId))
       case 'snapshot':return this.snapshot(r)
-      case 'lock': {this.tokens.clear();this.clearDeveloper();await this.engine.shutdown();await this.vault.queue;this.vault.close();this.vault=null;this.engine=null;return {locked:true}}
+      case 'lock': {this.tokens.clear();this.clearDeveloper();this.liveController.abort();await Promise.allSettled([this.media?.stop(),this.exploration?.stop()]);await this.engine.shutdown();await this.vault.queue;this.vault.close();this.vault=null;this.engine=null;return {locked:true}}
+      case 'liveSettings':{
+        const lifecycle=this.liveController,assertActive=()=>{if(lifecycle.signal.aborted||!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked')}
+        assertActive()
+        if(r.settings){await this.vault.transaction(s=>updateLiveSettings(s,r.settings));if(r.settings.mediaEnabled===false)await this.media.stop();if(r.settings.exploration!==undefined){await this.exploration.stop();this.exploration=new Exploration({vault:this.vault,engine:this.engine,services:this.services});this.exploration.start()}}
+        const settings=liveSettings(await this.vault.read());assertActive()
+        const vision=await this.media.visionStatus(settings);assertActive()
+        return {settings,browserAvailable:Boolean(this.services.browser),biliAvailable:biliConnection(this.services).available,bili:biliConnection(this.services),vision}
+      }
+      case 'mediaStart':return this.media.start({url:r.url,mode:r.mode,chatId:validId(r.chatId)},r.token)
+      case 'mediaStop':if(this.media.active&&this.media.active.owner!==r.token)throw new DotError('此陪伴窗口不属于当前窗口。');await this.media.stop();return {stopped:true}
+      case 'mediaStatus':this.media.touch(r.token);return this.media.status()
       case 'developerMode':{
         if(typeof r.enabled!=='boolean')throw new DotError('开发者开关无效。')
         this.developerAccess(r.token,r.enabled)
@@ -147,7 +173,7 @@ export class DotHost {
         this.developerAccess(r.token,true)
         // Whitelisted data only: no prompts, credentials, reasoning or raw tool output.
         return {time:Date.now(),current:this.engine.inspectedState(state),observation:this.engine.observations.get(chatId)||null,
-          phase:this.engine.partial.get(chatId)?.phase||null,presentations:(this.engine.presentationEvents.get(chatId)||[]).slice(-12)}
+          phase:this.engine.partial.get(chatId)?.phase||null,live:{media:this.media?.status()},presentations:(this.engine.presentationEvents.get(chatId)||[]).slice(-12)}
       }
       case 'extension':{
         if(!this.engine.extension)throw new DotError('本地陪伴扩展未安装。')
@@ -172,14 +198,22 @@ export class DotHost {
         if(typeof r.archived==='boolean')chat.archived=r.archived
         return chat
       })
-      case 'send':return this.engine.start(validId(r.chatId),r.text,r.requestId)
+      case 'fileBegin':return this.engine.files.begin(r,r.token)
+      case 'fileChunk':return this.engine.files.chunk(r,r.token)
+      case 'fileCancel':return this.engine.files.cancel(r.id,r.token)
+      case 'fileDiscard':return this.engine.files.discard(r.id)
+      case 'fileFinish':{const result=await this.engine.files.finish(r.id,r.token);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
+      case 'fileRead':{const result=await this.engine.files.read(r);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
+      case 'send':return this.engine.start(validId(r.chatId),r.text,r.requestId,{attachments:r.attachments||[]})
       case 'cancel':await this.engine.cancel();return {cancelled:true}
-      case 'search':return searchArchive(this.vault,await this.vault.read(),r.query)
+      case 'search':return (await searchArchive(this.vault,await this.vault.read(),r.query)).map(hit=>hit.role==='assistant'?{...hit,excerpt:responseText(this.vault,hit.excerpt)}:hit)
       case 'source': {
         const state=await this.vault.read();validId(r.id)
+        const reference=experienceOf(state,r.id)
+        if(reference){const observation=await readExperience(this.vault,reference);return {id:observation.id,role:'observation',text:[observation.caption,observation.text].filter(Boolean).join('\n'),time:observation.time,url:observation.url,position:observation.position,perception:observation.perception,origin:observation.origin}}
         if(!state.catalog.messages.some(m=>m.id===r.id))throw new DotError('原文不属于当前记忆库。')
         const m=await this.vault.message(r.id)
-        return {...publicBubble(m),link:refOf(m)}
+        return {...responseBubble(this.vault,m),link:refOf(m)}
       }
       case 'memories': {
         if(!['medium','long','permanent','knowledge','memes'].includes(r.layer))throw new DotError('无效的记忆分类。')
@@ -217,9 +251,11 @@ export class DotHost {
   }
   dispose(){return this.identities.dispose()}
   async disposeLocal(){
-    this.tokens.clear();this.clearDeveloper()
-    try{await Promise.allSettled([this.engine?.shutdown(),this.vault?.queue])}
-    finally{this.vault?.close();this.vault=null;this.engine=null}
+    this.tokens.clear();this.clearDeveloper();this.liveController.abort()
+    try{
+      await Promise.allSettled([this.media?.stop(),this.exploration?.stop()])
+      await Promise.allSettled([this.engine?.shutdown(),this.vault?.queue])
+    }finally{this.vault?.close();this.vault=null;this.engine=null;this.media=null;this.exploration=null}
   }
 }
 
@@ -232,6 +268,9 @@ export class DotService extends Service {
     this.host=new DotHost(services)
     ctx.inject(['web'],child=>{services.web=child.web;return()=>{delete services.web}})
     ctx.inject(['agents'],child=>{services.workspaceTasks=workspaceBridge(child.agents);return()=>{delete services.workspaceTasks}})
+    ctx.inject(['browser'],child=>{services.browser=child.browser;return()=>{delete services.browser;for(const runtime of this.host.identities.runtimes.values())runtime.media?.stop()}})
+    ctx.inject(['tools'],child=>{services.tools=child.tools;return()=>{delete services.tools}})
+    ctx.inject(['attachments'],child=>{const frames=attachFrameInput(child.attachments);if(frames)services.frameInput=frames;return()=>{if(services.frameInput===frames)delete services.frameInput;frames?.dispose()}})
     ctx.effect(()=>()=>this.host.dispose(),'Dot vault and running requests')
   }
   command(request) {

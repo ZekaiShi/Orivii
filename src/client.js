@@ -1,16 +1,20 @@
 import {DEFAULTS,readPreferences,visibleMessages,unwrap} from './core.js'
 import {createDotRemote} from './protocol.js'
 import {createDotView,attachDotSidebar} from './ui-state.js'
-import {createDotMotion} from './motion.js'
+import {createDotMotion,createSendTransition} from './motion.js'
+import {APPEARANCE_KEYS,appearanceStyle} from './appearance.js'
+import {createBiliConnection} from './bili-client.js'
+import {createFileCard,uploadChatFile} from './file-client.js'
 import {createDotEye,DOT_RING} from './eye.js'
-import {bubbleParts,createPacedReply} from './reply.js'
+import {messageBubbleParts,createPacedReply} from './reply.js'
 import {publicBubble} from './expression.js'
 import {createCompanionSettings} from './companion-settings.js'
 import {createDeveloperPanel} from './developer.js'
+import {createLiveSettings} from './live-client.js'
 import {createIdentitySettings} from './identity-client.js'
 
 const PANEL_ID='dsh-companion-dot'
-const DRAWER_TITLES={settings:'设置',identities:'我的 Orivii',developer:'开发者模式',persona:'交流方式',care:'消息与安静时段',privacy:'数据与权限',tasks:'工作记录',profile:'关于你',memory:'聊过的内容',search:'查聊天记录',source:'原始聊天'}
+const DRAWER_TITLES={settings:'设置',appearance:'外观',identities:'我的 Orivii',liveSettings:'陪伴与连接',companion:'一起看',developer:'开发者模式',persona:'交流方式',care:'消息与安静时段',privacy:'数据与权限',tasks:'工作记录',profile:'关于你',memory:'聊过的内容',search:'查聊天记录',source:'原始聊天'}
 async function apply(ctx) {
   const unmount=await ctx.remote.$mount(createDotRemote(require('zod').z))
   // Mounted namespaces are separate Cordis services; UI callbacks must close
@@ -54,13 +58,16 @@ function registerUi(ctx) {
   function ExtensionPanels(){const components=useSyncExternalStore(addonSubscribe,()=>addonSnapshot,()=>addonSnapshot);return h(React.Fragment,null,...components.map((Component,i)=>h(Component,{key:i})))}
   function Ring({size=20}) {return h('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none','aria-hidden':true},h('circle',{cx:12,cy:12,r:DOT_RING.radius,stroke:'currentColor',strokeWidth:DOT_RING.stroke}))}
   function Icon({name,size=18}) {
-    const paths={send:'M12 19V5m-6 6 6-6 6 6',back:'m14 6-6 6 6 6',close:'m6 6 12 12M18 6 6 18',more:'M5 12h.01M12 12h.01M19 12h.01',edit:'m15 5 4 4M4 20l4-1 12-12-4-4L4 15v5Z'}
+    const paths={add:'M12 5v14M5 12h14',send:'M12 19V5m-6 6 6-6 6 6',back:'m14 6-6 6 6 6',close:'m6 6 12 12M18 6 6 18',more:'M5 12h.01M12 12h.01M19 12h.01',edit:'m15 5 4 4M4 20l4-1 12-12-4-4L4 15v5Z'}
     return h('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true},h('path',{d:paths[name]}))
   }
   const button=(label,onClick,className='dot-text-button',content,disabled=false)=>h('button',{type:'button',onClick,className,'aria-label':label,title:label,disabled},content||label)
   const markdownLabels={code:{copyLabel:'复制',copiedLabel:'已复制',toolbarLabels:{codeLabel:'代码',wrapLabel:'自动换行',unwrapLabel:'取消换行'}},footnotes:'脚注'}
   const CompanionSettings=createCompanionSettings(React,{rpc,markdown:text=>h(require('@deepseek-ai/dsh-client-ui-primitives').MarkdownText,{text,labels:markdownLabels})})
   const DeveloperPanel=createDeveloperPanel(React,{rpc,extra:()=>h(ExtensionPanels)})
+  const LiveSettings=createLiveSettings(React,{rpc})
+  const BiliConnection=createBiliConnection(React,{rpc})
+  const FileCard=createFileCard(React,{rpc})
   const IdentitySettings=createIdentitySettings(React,{rpc})
   const avatar=(size=36)=>h('span',{className:'dot-avatar',style:{width:size,height:size}},h(Ring,{size:Math.round(size*.65)}))
   function openDotRow(){
@@ -75,7 +82,7 @@ function registerUi(ctx) {
       return()=>{attached?.dispose();adapter.current=null}
     },[])
     useEffect(()=>{adapter.current?.setExpanded(active&&state.expanded&&size!==18)},[active,state.expanded,size])
-    return h(React.Fragment,null,h('span',{ref:icon,'data-dot-sidebar-icon':true},h(DotEye,{compact:true,size,active:state.ready&&panelActive,enabled:state.eyeAnimation!==false})),h('style',null,STYLE),
+    return h(React.Fragment,null,h('span',{ref:icon,'data-dot-sidebar-icon':true,style:appearanceStyle(state)},h(DotEye,{compact:true,size,active:state.ready&&panelActive,enabled:state.eyeAnimation!==false})),h('style',null,STYLE),
       mount?require('react-dom').createPortal(h(Motion,{show:active&&state.expanded&&size!==18,immediate:!active||size===18||!state.ready},h('div',{className:'dot-sidebar-presence'},h('div',{className:'dot-sidebar-clip'},h(DotSidebarChats)))),mount):null)
   }
   function DotSidebarChats(){
@@ -117,8 +124,26 @@ function registerUi(ctx) {
     const [query,setQuery]=useState(''),[hits,setHits]=useState([]),[source,setSource]=useState(null)
     const [older,setOlder]=useState([])
     const [outbox,setOutbox]=useState([])
+    const [files,setFiles]=useState([]),filesRef=useRef([]),fileInput=useRef(null),composer=useRef(null),uploads=useRef(new Map()),sendTransition=useRef(null)
+    if(!sendTransition.current)sendTransition.current=createSendTransition()
+    function changeFiles(fn){filesRef.current=typeof fn==='function'?fn(filesRef.current):fn;setFiles(filesRef.current)}
+    function clearUploads(){for(const c of uploads.current.values())c.abort();uploads.current.clear();changeFiles([]);sendTransition.current.clear()}
+    useEffect(()=>()=>{for(const c of uploads.current.values())c.abort();sendTransition.current.clear()},[])
+    useEffect(()=>{if(!panelActive)sendTransition.current.clear()},[panelActive])
+    async function addFiles(list){
+      for(const file of Array.from(list||[])){
+        if(filesRef.current.length>=4){setError('每条消息最多附加 4 个文件。');break}
+        const localId=crypto.randomUUID(),controller=new AbortController();uploads.current.set(localId,controller)
+        changeFiles(old=>[...old,{localId,name:file.name,status:'uploading'}])
+        uploadChatFile(file,rpc,controller.signal).then(result=>{if(!controller.signal.aborted)changeFiles(old=>old.map(f=>f.localId===localId?{...result,localId,status:'ready'}:f))}).catch(e=>{if(!controller.signal.aborted){changeFiles(old=>old.filter(f=>f.localId!==localId));fail(e)}}).finally(()=>uploads.current.delete(localId))
+      }
+    }
+    function removeFile(file){uploads.current.get(file.localId)?.abort();changeFiles(old=>old.filter(f=>f.localId!==file.localId));if(file.id)rpc('fileDiscard',{id:file.id}).catch(fail)}
     const enteredAt=useRef(Date.now()),stickToBottom=useRef(true)
     const eyeController=useRef(null)
+    const [mediaState,setMediaState]=useState(null),[mediaUrl,setMediaUrl]=useState(''),[mediaMode,setMediaMode]=useState('video')
+    useEffect(()=>{const close=()=>{rpc('mediaStop').catch(()=>{})};globalThis.addEventListener?.('pagehide',close);return()=>{globalThis.removeEventListener?.('pagehide',close);close()}},[])
+    useEffect(()=>{if(!ready)return;let stopped=false,busy=false;const poll=async()=>{if(busy||stopped)return;busy=true;try{const v=await rpc('mediaStatus');if(!stopped)setMediaState(v)}catch{}finally{busy=false}};poll();const timer=setInterval(poll,2000);return()=>{stopped=true;clearInterval(timer)}},[ready,identityId])
     const activeRef=useRef(active),alive=useRef(true),epoch=useRef(0),scroll=useRef(null),draftRef=useRef(''),chatCreation=useRef(null),preserveDraftFor=useRef(null),browseAbort=useRef(null)
     useEffect(()=>{
       if(!menu&&!drawer)return
@@ -140,9 +165,9 @@ function registerUi(ctx) {
       return [...saved,...outbox.filter(m=>m.chatId===active&&!saved.some(s=>s.requestId===m.id||s.id===m.serverId)).map(m=>({...m,role:'user',requestId:m.id}))].map(publicBubble).filter(m=>m.text.trim())
     },[older,snapshot?.messages,outbox,active])
     function fail(e){if(e.code==='stale')return;if(e.code==='locked')clearPrivate();setError(e.message||'连接失败，请重试。')}
-    function clearPrivate(){epoch.current++;unlockToken='';activeRef.current=null;view.clear();setReady(false);setIdentityId(null);setSnapshot(null);setOutbox([]);chatCreation.current=null;draftRef.current='';setOlder([]);setMemories([]);setHits([]);setSource(null);setMemoryEdit(null);setDrawer(null);setMenu(false);setDraft('');setPassword('');setConfirm('');setSettings({});setModels([]);setMorePreferences(false);setProfileDraft({});setPreferredName('');setCompanionName('Orivii');setRename('');setQuery('')}
-    useEffect(()=>{view.set({ready,chats:ready?snapshot?.chats||view.get().chats:[],name:ready?snapshot?.settings?.name||'Orivii':'Orivii',eyeAnimation:ready?snapshot?.settings?.eyeAnimation!==false:true})},[ready,snapshot])
-    useEffect(()=>{enteredAt.current=Date.now();stickToBottom.current=true;setOlder([]);if(preserveDraftFor.current!==active){draftRef.current='';setDraft('')}preserveDraftFor.current=null;setError('')},[active])
+    function clearPrivate(){clearUploads();setMediaState(null);setMediaUrl('');epoch.current++;unlockToken='';activeRef.current=null;view.clear();setReady(false);setIdentityId(null);setSnapshot(null);setOutbox([]);chatCreation.current=null;draftRef.current='';setOlder([]);setMemories([]);setHits([]);setSource(null);setMemoryEdit(null);setDrawer(null);setMenu(false);setDraft('');setPassword('');setConfirm('');setSettings({});setModels([]);setMorePreferences(false);setProfileDraft({});setPreferredName('');setCompanionName('Orivii');setRename('');setQuery('')}
+    useEffect(()=>{view.set({ready,chats:ready?snapshot?.chats||view.get().chats:[],name:ready?snapshot?.settings?.name||'Orivii':'Orivii',eyeAnimation:ready?snapshot?.settings?.eyeAnimation!==false:true,characterColor:ready?snapshot?.settings?.characterColor||'':''})},[ready,snapshot])
+    useEffect(()=>{enteredAt.current=Date.now();stickToBottom.current=true;setOlder([]);if(preserveDraftFor.current!==active){draftRef.current='';setDraft('');clearUploads()}preserveDraftFor.current=null;setError('')},[active])
     useEffect(()=>{setOutbox(old=>{const rest=old.filter(m=>!(snapshot?.messages||[]).some(s=>s.requestId===m.id||s.id===m.serverId));return rest.length===old.length?old:rest})},[snapshot?.messages])
     async function refresh(id=activeRef.current) {
       const generation=epoch.current
@@ -250,8 +275,9 @@ function registerUi(ctx) {
     useEffect(()=>{if(scroll.current&&stickToBottom.current)scroll.current.scrollTop=scroll.current.scrollHeight},[messages,snapshot?.partial?.text,active])
     function select(id){setActive(id);activeRef.current=id;setOlder([]);setSnapshot(old=>old?{...old,messages:[],partial:null}:old);setError('');draftRef.current='';setDraft('')}
     async function adoptOpen(result,previousChat=null){
+
       if(!alive.current)return
-      clearPrivate();unlockToken=result.token;enteredAt.current=Date.now();setWorkspace(result.workspace);setSessionMode(result.session?.mode||'run')
+      clearPrivate(false);unlockToken=result.token;enteredAt.current=Date.now();setWorkspace(result.workspace);setSessionMode(result.session?.mode||'run')
       const next=await rpc('snapshot',{chatId:null}),list=await rpc('identities')
       if(!alive.current)return
       setSnapshot(next);setIdentities(list.items);setIdentityId(result.identityId);setReady(true)
@@ -260,7 +286,7 @@ function registerUi(ctx) {
     }
     async function switchIdentity(actionName,data){
       if(switching.current||busy)throw new Error('请等待当前操作完成。')
-      if(draftRef.current.trim()||outbox.length)throw new Error('请先发送草稿，并处理尚未送达的消息，再切换 Orivii。')
+      if(draftRef.current.trim()||filesRef.current.length||outbox.length)throw new Error('请先发送或移除草稿和附件，并处理尚未送达的消息，再切换 Orivii。')
       const previous=unlockToken
       switching.current=true;setBusy(true);setError('')
       try{const result=await rpc(actionName,data);await adoptOpen(result)}catch(e){
@@ -279,9 +305,13 @@ function registerUi(ctx) {
       await adoptOpen(result)
     })}
     async function newChat(){await action(async()=>{const chat=await rpc('createChat',{title:'新的聊天'});select(chat.id);await refresh(chat.id)})}
+    async function ensureChat(){if(activeRef.current)return activeRef.current;const chat=await rpc('createChat',{title:'新的聊天'});select(chat.id);await refresh(chat.id);return chat.id}
+    async function startMedia(){await action(async()=>{const result=await rpc('mediaStart',{chatId:await ensureChat(),url:mediaUrl,mode:mediaMode});setMediaState(result);setDrawer(null)})}
     function send(){
-      const text=draftRef.current.trim();if(!text||!ready||switching.current)return
-      const request={text,chatId:activeRef.current,id:crypto.randomUUID(),time:Date.now(),status:'sending'}
+      const attachments=filesRef.current.filter(f=>f.status==='ready').map(({id,name,mediaType,size,kind})=>({id,name,mediaType,size,kind}))
+      const text=draftRef.current.trim()||(attachments.length?'分享了'+attachments.length+'个附件':'');if(!text||!ready||switching.current||filesRef.current.some(f=>f.status==='uploading'))return
+      const request={text,attachments,chatId:activeRef.current,id:crypto.randomUUID(),time:Date.now(),status:'sending'}
+      sendTransition.current.capture(request.id,composer.current);changeFiles([])
       draftRef.current='';setDraft('');setError('');stickToBottom.current=true
       setOutbox(old=>[...old,request]);eyeController.current?.activity('message')
       return transmit(request)
@@ -309,7 +339,7 @@ function registerUi(ctx) {
         }
         // Start the request immediately. The Host persists and orders messages;
         // generating a reply never holds the composer or the next send hostage.
-        const accepted=await rpc('send',{chatId:id,text:request.text,requestId:request.id})
+        const accepted=await rpc('send',{chatId:id,text:request.text,requestId:request.id,...(request.attachments?.length?{attachments:request.attachments.map(f=>f.id)}:{})})
         received=true
         if(!current())return
         setOutbox(old=>old.map(m=>m.id===request.id?{...m,chatId:id,serverId:accepted.userId,status:'sent'}:m))
@@ -339,14 +369,16 @@ function registerUi(ctx) {
       }},h(require('@deepseek-ai/dsh-client-ui-primitives').MarkdownText,{text:markdown,labels:markdownLabels}))
     }
     function messageRow(m){
-      m=publicBubble(m);if(!m.text.trim())return null
+      m=publicBubble(m);if(!m.text.trim()&&!m.attachments?.length)return null
       return h(PacedReply,{key:m.requestId||m.id,message:m,pace:m.role==='assistant'&&m.time>=enteredAt.current,render:renderMessageRow,onProgress:()=>{if(scroll.current&&stickToBottom.current)scroll.current.scrollTop=scroll.current.scrollHeight}})
     }
     function renderMessageRow(m){
-      const parts=m.role==='assistant'?bubbleParts(m.text):[m.text]
-      return h('div',{className:'dot-message-row '+(m.role==='user'?'dot-outgoing':'dot-incoming')+(m.live?' dot-live-reply':''),key:m.requestId||m.id,'data-dot-new':m.time>=enteredAt.current,'data-message-id':m.id},m.role==='assistant'?avatar(28):null,
-        h('div',{className:'dot-message-stack'},...parts.map((part,i)=>h('div',{className:'dot-bubble',key:i,style:{'--bubble-delay':Math.min(i*100,400)+'ms'}},h('div',{className:'dot-bubble-content'},richText(part),
-          i===parts.length-1&&m.webSources?.length?h('details',{className:'dot-citations'},h('summary',null,'来源'),...m.webSources.filter(s=>/^https?:\/\//i.test(s.url)).map(s=>h('a',{key:s.url,href:s.url,target:'_blank',rel:'noopener noreferrer'},s.title||s.url))):null))),
+      const parts=messageBubbleParts(m),detailsIndex=parts.findLastIndex(part=>part.kind!=='image')
+      return h('div',{ref:node=>sendTransition.current.arrive(m.requestId||m.id,node),className:'dot-message-row '+(m.role==='user'?'dot-outgoing':'dot-incoming')+(m.live?' dot-live-reply':''),key:m.requestId||m.id,'data-dot-new':m.time>=enteredAt.current,'data-message-id':m.id},m.role==='assistant'?avatar(28):null,
+        h('div',{className:'dot-message-stack'},...parts.map((part,i)=>h('div',{className:'dot-bubble'+(part.kind==='image'?' dot-image-bubble':''),key:part.key,style:{'--bubble-delay':Math.min(i*100,400)+'ms'}},h('div',{className:'dot-bubble-content'},part.text?richText(part.text):null,
+          part.attachments?.length?h('div',{className:'dot-file-list'},...part.attachments.map(file=>h(FileCard,{key:file.id,file,onError:fail}))):null,
+          i===detailsIndex&&m.connection==='bilibili'?h(BiliConnection,{autoLogin:m.time>=enteredAt.current,messageId:m.id}):null,
+          i===detailsIndex&&m.webSources?.length?h('details',{className:'dot-citations'},h('summary',null,'来源'),...m.webSources.filter(s=>/^https?:\/\//i.test(s.url)).map(s=>h('a',{key:s.url,href:s.url,target:'_blank',rel:'noopener noreferrer'},s.title||s.url))):null))),
           h('div',{className:'dot-message-meta'},h('span',null,m.status==='sending'?'发送中…':m.status==='failed'?'发送失败，可重试':m.live?'正在输入…':new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})),m.incomplete?h('span',null,'回复达到长度上限'):null,m.status==='failed'?button('重试发送',()=>retrySend(m),'dot-text-button'):null)))
     }
     function thinkingBubble(){return h('div',{className:'dot-message-row dot-incoming dot-pending',key:'thinking'},avatar(28),
@@ -396,19 +428,22 @@ function registerUi(ctx) {
         h('p',{className:'dot-security-note'},plaintext?'明文文件可被有目录权限的程序读取。加一个界面密码不能保护明文。':'聊天内容会加密保存，密码不会保存。解锁后，相关内容会交给你选择的模型处理。请妥善保管密码，丢失后无法恢复。'),
         errorBox,h('button',{type:'submit',className:'dot-save',disabled:busy||browseBusy||initializing||inspecting||!workspaceInfo||workspaceInfo.state==='incomplete'||Boolean(browse)},busy?'正在打开…':creating?'创建工作空间':plaintext?'打开记忆库':'解锁')))
     const sourceLinks=entry=>h('div',{className:'dot-memory-sources'},...(entry.sources||[]).map(s=>button('查看原文',()=>showSource(s.id),'dot-source-link')))
-    return h('div',{className:'dot-page','data-testid':'dot-page','data-dot-working':Boolean(working),onClickCapture:animateDisclosure,onPointerDownCapture:()=>eyeController.current?.activity('pointer'),onKeyDownCapture:()=>eyeController.current?.activity('input'),onScrollCapture:()=>eyeController.current?.activity()},h('style',null,STYLE),
+    return h('div',{className:'dot-page',style:appearanceStyle(drawer==='appearance'?{...prefs,...settings}:prefs),'data-testid':'dot-page','data-dot-working':Boolean(working),onClickCapture:animateDisclosure,onPointerDownCapture:()=>eyeController.current?.activity('pointer'),onKeyDownCapture:()=>eyeController.current?.activity('input'),onScrollCapture:()=>eyeController.current?.activity()},h('style',null,STYLE),
       h('section',{className:'dot-conversation','aria-label':'与'+prefs.name+'的对话'},
         h('header',{className:'dot-chat-header'},
           h('div',{className:'dot-contact'},h(DotEye,{name:prefs.name,phase:working?(snapshot?.partial?.phase||'responding'):lastJob?.status==='failed'?'error':null,backgroundPhase:snapshot?.backgroundPhase,input:Boolean(draft),enabled:prefs.eyeAnimation!==false,active:panelActive,chatId:active,messages,historyReady:ready&&snapshot?.chatId===active,livePresentation:working?snapshot?.partial?.presentation:null,presentationEvents:snapshot?.presentationEvents,controllerRef:eyeController}),h('strong',null,prefs.name),h('span',null,working?snapshot?.partial?.stage||(sending?'正在发送…':'正在思考…'):selected?.title||'在这里，慢慢聊')),
           h('div',{className:'dot-header-actions'},button('新建聊天',newChat,'dot-icon-button',h(Icon,{name:'edit'}),busy),running?button('停止',()=>action(()=>rpc('cancel'))):null,React.cloneElement(button('更多',()=>setMenu(!menu),'dot-icon-button',h(Icon,{name:'more'})),{'aria-expanded':menu,'aria-controls':'dot-actions-menu'}),
             h(Motion,{show:menu},h('div',{className:'dot-menu',id:'dot-actions-menu'},button('设置',openSettings,'dot-menu-item'),snapshot?.extensionAvailable?button('工作记录',()=>{setDrawer('tasks',true);setMenu(false)},'dot-menu-item'):null,button('查聊天记录',()=>{setDrawer('search',true);setMenu(false)},'dot-menu-item'),button('锁定',()=>action(async()=>{await rpc('lock');clearPrivate()}),'dot-menu-item'))))),
+        h('div',{className:'dot-live-controls'},button('一起看',()=>setDrawer('companion',true),'dot-text-button'),mediaState?h('span',{role:'status'},mediaState.state==='active'?`正在${mediaState.mode==='video'?'陪看':'共读'} · ${mediaState.title||'已选页面'}`:mediaState.lastError||'正在等待页面'):null,mediaState?button('结束陪伴',()=>action(async()=>{await rpc('mediaStop');setMediaState(null)})):null),
         h('div',{className:'dot-transcript',ref:scroll,role:'log','aria-label':'聊天记录','aria-live':'polite',onScroll:event=>{const el=event.currentTarget;stickToBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<80}},messages.length?h('div',{className:'dot-message-column',key:active},
           (snapshot?.totalMessages||0)>messages.length?button('加载更早的消息',()=>action(async()=>{const result=await rpc('snapshot',{chatId:active,beforeId:messages[0].id});setOlder(old=>[...result.messages,...old])})):null,
           ...historyRows,working&&snapshot?.partial?.text&&!messages.some(m=>m.id===snapshot.partial.id)?messageRow({id:snapshot.partial.id||'partial',role:'assistant',text:snapshot.partial.text,time:snapshot.partial.time||Date.now(),live:true}):null,
           h(Motion,{show:Boolean(working&&!snapshot?.partial?.text)},thinkingBubble())):working?h('div',{className:'dot-message-column'},thinkingBubble()):h('div',{className:'dot-empty-chat'},h('h2',null,`和${prefs.name}聊聊`),h('p',null,'想说什么，都可以从这里开始。'))),
         lastJob?.error?h('div',{className:'dot-error',role:'status'},lastJob.error):null,errorBox,
-        h('form',{className:'dot-compose',onSubmit:e=>{e.preventDefault();send()}},h('div',{className:'dot-compose-box'},h('textarea',{value:draft,disabled:switching.current,rows:1,maxLength:16000,placeholder:`发消息给${prefs.name}…`,'aria-label':'消息',onChange:e=>{draftRef.current=e.target.value;setDraft(e.target.value)},onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}}),
-          h('button',{type:'submit',className:'dot-send',disabled:busy||!draft.trim(),'aria-label':'发送消息'},h(Icon,{name:'send'}))),
+        h('form',{className:'dot-compose',onDragOver:e=>{if(e.dataTransfer?.types?.includes('Files'))e.preventDefault()},onDrop:e=>{if(e.dataTransfer?.files?.length){e.preventDefault();addFiles(e.dataTransfer.files)}},onSubmit:e=>{e.preventDefault();send()}},
+          files.length?h('div',{className:'dot-compose-files'},...files.map(file=>h('div',{className:'dot-draft-file',key:file.localId},h('span',null,file.name+(file.status==='uploading'?' · 上传中…':'')),button('移除 '+file.name,()=>removeFile(file),'dot-icon-button',h(Icon,{name:'close',size:14}))))):null,
+          h('div',{className:'dot-compose-box',ref:composer},h('input',{ref:fileInput,type:'file',multiple:true,hidden:true,'aria-label':'选择图片或文件',onChange:e=>{addFiles(e.target.files);e.target.value=''}}),button('添加图片或文件',()=>fileInput.current?.click(),'dot-attach-button',h(Icon,{name:'add',size:20}),files.length>=4),h('textarea',{value:draft,disabled:switching.current,rows:1,maxLength:16000,placeholder:`发消息给${prefs.name}…`,'aria-label':'消息',onChange:e=>{draftRef.current=e.target.value;setDraft(e.target.value)},onPaste:e=>{const pasted=e.clipboardData?.files;if(pasted?.length){e.preventDefault();addFiles(pasted)}},onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send()}}}),
+          h('button',{type:'submit',className:'dot-send',disabled:busy||files.some(f=>f.status==='uploading')||(!draft.trim()&&!files.length),'aria-label':'发送消息'},h(Icon,{name:'send'}))),
           h('div',{className:'dot-compose-foot'},h('span',null,'Enter 发送 · Shift + Enter 换行'),h('span',null,'')))),
       h(Motion,{show:Boolean(drawer)},drawer?h('aside',{className:'dot-details dot-memory-details','aria-label':'Orivii 详情'},
         h('div',{className:'dot-details-header'},parentDrawer?button('返回'+DRAWER_TITLES[parentDrawer],backDrawer,'dot-back-button',h(React.Fragment,null,h(Icon,{name:'back',size:16}),'返回')):null,h('h2',{ref:drawerHeading,tabIndex:-1},DRAWER_TITLES[drawer]),button('关闭',()=>setDrawer(null),'dot-icon-button',h(Icon,{name:'close'}))),
@@ -421,6 +456,8 @@ function registerUi(ctx) {
           (!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?h('label',null,'自定义表达方式',h('textarea',{value:settings.persona||'',onChange:e=>setSettings(old=>({...old,persona:e.target.value}))})):null),
           button('保存设置',()=>action(async()=>{const changes=Object.fromEntries(['name','eyeAnimation','webSearch','provider','model',...((!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?['persona']:[])].filter(key=>settings[key]!==prefs[key]).map(key=>[key,settings[key]]));await rpc('settings',{settings:changes});await refresh();setDrawer(null)}),'dot-save'),
           button('我的 Orivii',()=>setDrawer('identities')),
+          button('外观',()=>setDrawer('appearance')),
+          button('陪伴与连接',()=>setDrawer('liveSettings')),
           h('hr'),
           h('details',{className:'dot-advanced dot-more-preferences',open:morePreferences,onToggle:e=>setMorePreferences(e.currentTarget.open)},h('summary',null,'更多偏好'),h('div',{className:'dot-preference-links'},
             button('关于你',openProfile),
@@ -428,6 +465,13 @@ function registerUi(ctx) {
           selected?h('details',{className:'dot-advanced'},h('summary',null,'当前聊天'),h('label',null,h('span',null,'聊天标题'),h('input',{value:rename,onChange:e=>setRename(e.target.value)})),button('重命名',()=>action(async()=>{await rpc('editChat',{chatId:active,title:rename});await refresh()})),button(selected.archived?'恢复聊天':'归档聊天',()=>action(async()=>{await rpc('editChat',{chatId:active,archived:!selected.archived});await refresh();setDrawer(null)})),h('p',null,'归档只整理列表，不会删除共享记忆。')):null,
           h('details',{className:'dot-advanced'},h('summary',null,'存储与迁移'),h('p',null,'工作空间：'+snapshot?.workspace),h('p',null,'在“我的 Orivii”中创建或切换角色，无需重启。锁定后也可打开其他已有目录。'),button('导入旧版 Dot 聊天',importLegacy),h('p',null,'仅导入旧版聊天气泡，原有 DSH 记录保留。'))):null,
         drawer==='identities'?h(IdentitySettings,{onSwitch:switchIdentity,onError:fail}):null,
+        drawer==='appearance'?h('div',{className:'dot-settings dot-appearance'},h('p',null,'选择你喜欢的配色，每个 Orivii 分别保存。气泡文字会自动选择清晰的黑色或白色。'),
+          ...[['bubbleColor','我的气泡','#e2d7ff'],['replyColor','Orivii 的气泡','#d5eced'],['characterColor','Orivii 颜色','#d8a8ef']].map(([key,label,fallback])=>h('label',{key},h('span',null,label),h('div',{className:'dot-color-row'},h('input',{type:'color','aria-label':label,value:settings[key]||fallback,onChange:e=>setSettings(s=>({...s,[key]:e.target.value}))}),h('span',null,settings[key]||'跟随主题'),button('重置'+label,()=>setSettings(s=>({...s,[key]:''})))))),
+          h('div',{className:'dot-color-presets'},...[['紫雾','#e2d7ff','#e4e0f0','#b39ddb'],['海盐','#ccecf0','#dae9eb','#63b8c4'],['杏桃','#ffe1cc','#f3dfd1','#e8a080'],['玫瑰','#f4d6e8','#eaddea','#d58db5']].map(([name,bubbleColor,replyColor,characterColor])=>button(name,()=>setSettings(s=>({...s,bubbleColor,replyColor,characterColor}))))),
+          button('恢复主题默认',()=>setSettings(s=>({...s,...Object.fromEntries(APPEARANCE_KEYS.map(k=>[k,'']))}))),
+          button('保存外观',()=>action(async()=>{await rpc('settings',{settings:Object.fromEntries(APPEARANCE_KEYS.map(k=>[k,settings[k]||'']))});await refresh();backDrawer()}),'dot-save')):null,
+        drawer==='liveSettings'?h(React.Fragment,null,h(LiveSettings,{onError:fail}),h(BiliConnection)):null,
+        drawer==='companion'?h('div',{className:'dot-settings'},h('p',null,'打开专用可见窗口，一起看当前视频或阅读文字。只观察你选择的站点，离开该站点会暂停。'),h('label',null,'网页地址',h('input',{value:mediaUrl,onChange:e=>setMediaUrl(e.target.value),placeholder:'https://www.bilibili.com/video/…'})),h('label',null,'一起做什么',h('select',{value:mediaMode,onChange:e=>setMediaMode(e.target.value)},h('option',{value:'video'},'看视频'),h('option',{value:'reading'},'读文章'))),button('打开陪伴窗口',startMedia,'dot-save',null,busy||!mediaUrl.trim()),button('陪伴与连接设置',()=>setDrawer('liveSettings')),h(BiliConnection)):null,
         ['persona','care','privacy','tasks'].includes(drawer)?h(CompanionSettings,{key:drawer,section:drawer,onError:fail,onSource:showSource,onMemories:()=>showMemories('permanent')}):null,
         drawer==='developer'?h(DeveloperPanel,{chatId:active,active:panelActive,onError:fail,onSource:showSource}):null,
         drawer==='profile'?h('div',{className:'dot-settings'},

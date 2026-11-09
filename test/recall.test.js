@@ -46,7 +46,7 @@ test('small context uses intact recent bubbles without deleting older history',(
   const context=buildContext(state,chatId,32000,{provider:'test',model:'test'})
   assert.ok(context.messages.length<state.short.messages.length)
   assert.match(context.messages.at(-1).content[0].text,/蓝瘦香菇/)
-  assert.match(context.system,/先通过 reply_to_user/)
+  assert.match(context.system,/先用 reply_to_user/)
   assert.equal(JSON.stringify(state),original)
 })
 test('complementary knowledge stays active; an explicit question marks uncertainty without declaring a replacement true',()=>{

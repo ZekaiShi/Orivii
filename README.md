@@ -22,15 +22,17 @@
 
 ## 快速开始
 
+**1.0.2 可通过 GitHub Release 安装。** npm 可用版本以官方注册表实际返回为准。
+
 **已在使用 DSH？** 安装插件、选一个资料目录，就可以开始。模型沿用你在 DSH 中配置的服务。
 
 1. **安装。** Web 用户在运行 DSH 的电脑上执行：
 
    ```sh
-   dsh plugin --profile web add dsh-orivii@1.0.1
+   dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
    ```
 
-   Desktop 用户在应用内插件管理中添加 **`dsh-orivii@1.0.1`**，按提示重新启动。
+   Desktop 用户在应用内插件管理中添加 **`https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz`**，按提示重新启动。
 2. **打开。** 点击左侧 **Orivii**，选择工作空间，设置名字与解锁密码。
 3. **认识一下。** 发一句「叫我小林就好，平时说话简短一点」，开始你们的第一段对话。
 
@@ -63,7 +65,16 @@
 
 联网需要可用的 DSH 搜索服务；后台工作取决于宿主已配置的工具与权限。提醒需要 DSH 持续运行、对应角色保持解锁，不是关机也能响的系统闹钟。
 
-## 1.0.1 · 多一种相处方式
+## 1.0.2 · 把图片和事情一起聊
+
+- **图片直接发到聊天里。** 选择、粘贴或拖入图片和文件；图片单独成泡，右侧圆形箭头下载。模型也能交付真实图片和文本类附件。
+- **接上已安装的 B 站工具。** 读取视频正文、字幕、音轨转写和评论；登录未就绪时提供原插件的扫码入口。
+- **换一套喜欢的颜色。** 在“外观”中调整双方气泡和角色颜色，发送时带柔和回弹。
+- **工具调用更稳定。** 动态发现宿主注册的工具，修复思考模式工具往返失败；查询期间仍可继续聊天。
+
+[图片、B 站连接与外观教程 →](https://github.com/ZekaiShi/Orivii/blob/main/docs/interaction-preview.md)
+
+## 多一种相处方式
 
 ![多角色示意：Orivii、阿栗、小舟拥有各自独立的聊天与记忆](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/roles.svg)
 
@@ -100,9 +111,9 @@
 
 ## 一起把它完善
 
-**现在可以使用：** 文字聊天、表情、跨聊天记忆、联网查询、自然语言提醒、后台委托、多角色与解锁期限。
+**现在可以使用：** 文字与图片聊天、附件收发、表情、跨聊天连续状态、联网查询、B 站插件读取、自然语言提醒、后台委托、多角色、外观与解锁期限。
 
-**接下来完善：** 聊天与任务稳定性、文件交付、知识纠错与召回、Office 和科研工作流。可打断语音、同步陪看与更多官方消息渠道仍在计划中，**不属于 1.0.1 的可用功能**。
+**继续完善：** Office 与 PDF 正文解析、知识纠错与召回、科研工作流和更多官方消息渠道。同步陪看、网页共读与指定话题探索提供默认关闭的预览入口，依赖宿主配置；语音通话未包含在 1.0.2 中。
 
 [查看完整更新计划](https://github.com/ZekaiShi/Orivii/blob/main/UPDATES.md) · [查看已发布更新](https://github.com/ZekaiShi/Orivii/blob/main/CHANGELOG.md)
 

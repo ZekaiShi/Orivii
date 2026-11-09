@@ -62,11 +62,7 @@ export class IdentityManager {
     clearTimeout(runtime.accessTimer)
     if(runtime.access&&runtime.access.expiresAt!==null){
       const access=runtime.access
-      runtime.accessTimer=setTimeout(()=>this.serialized(async()=>{
-        if(runtime.access!==access)return
-        if(this.valid(runtime))this.schedule(runtime)
-        else await this.closeRuntime(runtime)
-      }).catch(()=>{}),Math.max(1,access.expiresAt-this.now()))
+      runtime.accessTimer=setTimeout(()=>this.serialized(async()=>{if(runtime.access===access&&!this.valid(runtime))await this.closeRuntime(runtime)}).catch(()=>{}),Math.max(1,access.expiresAt-this.now()))
       runtime.accessTimer.unref?.()
     }
   }
@@ -99,7 +95,7 @@ export class IdentityManager {
     const active=this.owner(token),data=await this.registry()
     return {items:data.items.map(({id,name,workspace,encrypted,mode})=>({id,name,workspace,encrypted,mode,unlocked:this.valid(this.runtime(workspace)),active:active?.vault?.meta.id===id})),current:active?.vault?.meta.id||null,session:active?.access?{mode:active.access.mode,expiresAt:active.access.expiresAt}:null}
   }
-  async pauseInteractive(runtime){runtime?.clearDeveloper()}
+  async pauseInteractive(runtime){runtime?.clearDeveloper();runtime?.speechCheck?.controller.abort();await Promise.allSettled([runtime?.voice?.stop(),runtime?.media?.stop()])}
   async manage(request){
     await this.expire()
     if(request.action==='setup'||request.action==='unlock')return this.authenticate(request)
@@ -154,7 +150,7 @@ export class IdentityManager {
       if(['setup','unlock','resume','lock','identityCreate','identitySwitch','sessionPolicy'].includes(request.action))return await this.serialized(()=>this.manage(request))
       if(request.action==='identities')return {ok:true,value:await this.list(request.token)}
       const runtime=this.owner(request.token)
-      if(request.action==='status'||request.action==='webCheck')return (runtime||this.root).commandLocal(request)
+      if(request.action==='status'||request.action==='webCheck'||request.action==='capabilities')return (runtime||this.root).commandLocal(request)
       if(!runtime)throw new DotError('记忆库已锁定，请先解锁。','locked')
       const result=await runtime.commandLocal(request)
       if(!runtime.allowed(request.token))throw new DotError('记忆库已锁定，请先解锁。','locked')

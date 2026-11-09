@@ -52,6 +52,27 @@ test('hidden lookup releases foreground, preserves current persona, and delivers
   assert.equal((await f.host.command({action:'extension',token:'a'.repeat(64),request:{action:'monitorMode',enabled:true}})).ok,false)
 })
 
+test('installed bili tool can run hidden research without a general web service and preserves foreground conversation',async t=>{
+  let turns=0,release,started=false
+  const f=await fixture(t,async o=>{
+    if(o.system.includes('[ORIVII_RESEARCH]')){
+      assert.deepEqual(o.tools.map(t=>t.name),['read_bilibili_video','discover_dsh_tools'])
+      return o.messages.some(m=>m.role==='tool')?say('BILI_PRIVATE_FINDING'):[tool('read_bilibili_video',{bv:'BV1xx411c7mD'})]
+    }
+    if(o.system.includes('[BACKGROUND_RESULT_DELIVERY]'))return say('这个视频的内容已核对。')
+    if(++turns===1)return [tool('background_research',{objective:'读取 BV1xx411c7mD',domain:'web',reply:'我看看这个视频。'})]
+    return say('嗯，先聊你现在说的。')
+  })
+  f.services.tools={get:name=>name==='bili_watch',execute:async request=>{assert.equal(request.name,'bili_watch');started=true;await new Promise(r=>{release=r});return {content:[{type:'text',text:'BILI_PRIVATE_EVIDENCE'}]}}}
+  await f.send('看看 BV1xx411c7mD');await until(()=>started)
+  await f.send('我想先聊别的')
+  let snapshot=await f.call('snapshot',{chatId:f.chat.id})
+  assert.equal(snapshot.messages.at(-1).text,'嗯，先聊你现在说的。');assert.doesNotMatch(JSON.stringify(snapshot),/BILI_PRIVATE/)
+  release();await until(async()=>(await f.host.vault.read()).catalog.backgroundResearch[0]?.status==='delivered')
+  const state=await f.host.vault.read();assert.match(state.catalog.backgroundResearch[0].result.sources[0].url,/bilibili.com\/video\/BV1xx411c7mD/)
+  snapshot=await f.call('snapshot',{chatId:f.chat.id});assert.equal(snapshot.messages.at(-1).text,'这个视频的内容已核对。');assert.doesNotMatch(JSON.stringify(snapshot),/BILI_PRIVATE/)
+})
+
 test('updated task discards old results; cancelling prevents late delivery and cross-chat control',async t=>{
   let taskId,turn=0,release,started=false
   const f=await fixture(t,async o=>{

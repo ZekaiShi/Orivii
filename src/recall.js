@@ -97,5 +97,5 @@ export function recallLearned(state,query,limit=12) {
   return learnedEntries(state).filter(e=>e.enabled&&e.status!=='superseded').map(e=>({...e,score:relevance(e.topic+' '+e.text+' '+(e.tags||[]).join(' '),query)})).filter(e=>e.score>0).sort((a,b)=>b.score-a.score||b.time-a.time).slice(0,limit)
 }
 export function learnedText(e) {
-  return `[${e.kind==='memes'?'共同话题':'讨论中的知识'} · ${e.status==='disputed'?'存疑，勿作定论':e.origin==='user'?'用户修订':e.speaker==='user'?'用户提出，未经外部核验':'助手曾解释，未经外部核验'}] ${e.topic}：${e.text}\n来源消息：${e.sourceIds.join(' ')}（可调用 memory_read 核实）`+(e.kind==='memes'?`\n语境线索（仅参考）：${e.usage||'未记录'}；避免场合：${e.avoid||'用户难过、痛苦或不欢迎调侃时'}。这不是必须使用的梗。`:'')
+  return `[${e.kind==='memes'?'梗与话题':'知识记录'} · ${e.status==='disputed'?'存疑，勿作定论':e.origin==='exploration'?'自主阅读的公开资料，不代表共同经历或已交叉核实':e.origin==='user'?'用户修订':e.speaker==='user'?'用户提出，未经外部核验':'助手曾解释，未经外部核验'}] ${e.topic}：${e.text}\n来源记录：${e.sourceIds.join(' ')}（可调用 memory_read 核实）`+(e.kind==='memes'?`\n语境线索（仅参考）：${e.usage||'未记录'}；避免场合：${e.avoid||'用户难过、痛苦或不欢迎调侃时'}。这不是必须使用的梗。`:'')
 }

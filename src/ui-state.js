@@ -5,7 +5,7 @@ export function createDotView() {
     get:()=>value,
     subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener)},
     set:patch=>{value={...value,...patch};for(const listener of listeners)listener()},
-    clear(){this.set({ready:false,chats:[],active:null,name:'Orivii',eyeAnimation:true})},
+    clear(){this.set({ready:false,chats:[],active:null,name:'Orivii',eyeAnimation:true,characterColor:''})},
   }
 }
 

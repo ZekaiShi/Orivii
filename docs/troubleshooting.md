@@ -19,10 +19,10 @@
 
 `npm view` 只是查询仓库，不会发布或安装。E404 表示该注册表没有返回你请求的包或版本，也可能是私有包权限问题。
 
-Orivii 的正式 npm 包是 **`dsh-orivii`**，1.0.1 已发布。Windows 可以用以下只读命令检查官方注册表：
+Orivii 的正式 npm 包是 **`dsh-orivii`**，当前版本以 npm 注册表的实际返回为准。Windows 可以用以下只读命令检查官方注册表：
 
 ```powershell
-npm.cmd view dsh-orivii@1.0.1 name version dist.tarball --registry=https://registry.npmjs.org/ --prefer-online
+npm.cmd view dsh-orivii@1.0.2 name version dist.tarball --registry=https://registry.npmjs.org/ --prefer-online
 ```
 
 若此命令返回正确版本，而默认命令失败，检查你正在使用的 npm 镜像：
@@ -66,7 +66,8 @@ npm.cmd config get registry
 | 提醒没有送到 | 让它列出已经保存的提醒；核对时间、时区、消息设置，确认 DSH 持续运行且角色未锁定；查看创建提醒的原聊天 |
 | 说“已派发”，却没看到文件 | 更多 → 工作记录查看状态；到对应 DSH 任务核对工具、权限和实际产物。派发成功不等于完成 |
 | 切换角色被阻止 | 先发送或处理输入草稿，等待未送达消息结束，再切换 |
-| 找不到通话 / 陪看入口 | 这些不是 1.0.1 的可用功能，进度见更新计划 |
+| 找不到通话入口 | 1.0.2 未包含语音通话 |
+| 陪伴窗口打不开 | 在“设置 → 陪伴与连接”开启预览，并安装可见模式的 dsh-browser |
 
 ## 动画与界面
 
@@ -89,3 +90,11 @@ DSH 版本：
 ```
 
 公开 Issue 不适合上传真实聊天、记忆库、完整日志或任何凭据。疑似安全问题请看 [安全反馈](../SECURITY.md)。
+
+## B 站只搜索到了标题，没有读到内容？
+
+在当前 Web 或 Desktop 配置中安装并启用 dsh-bili-watch，再从“陪伴与连接”检查状态。字幕不足时，原插件可能需要 ffmpeg、本地转写模型或 OCR；按原插件文档安装这些依赖。Watch 与 Scroll 的登录各自维护，不能把 Desktop 的已登录状态直接当作当前 Web 的验证结果。账号未登录时使用连接区的二维码。
+
+## 模型请求显示 INVALID_REQUEST？
+
+先升级到 1.0.2，并确认实际运行的 Web / Desktop 配置已加载新版本。本次修复了思考模式工具往返所需的回放信息丢失；若仍失败，请提供模型供应商、版本和脱敏后的错误代码。

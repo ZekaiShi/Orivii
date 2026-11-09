@@ -11,8 +11,6 @@ import {z} from 'zod'
 import {createDotRemote} from '../src/protocol.js'
 import {apply,DotService} from '../src/host.js'
 import {MarkdownText} from './markdown-stub.js'
-import {loadClientBundle} from './client-loader.js'
-import metadata from '../package.json' with {type:'json'}
 
 async function installed(name,entry='index.js') {
   // Resolve declared development dependencies through their public exports.
@@ -57,7 +55,10 @@ test('built Orivii activates through actual DSH Client Remote and Host Gateway; 
       await assert.rejects(()=>client.remote.$mount(old),/has no strict codec/)
       client.provide('slots',{inject(_name,fn){fn()},register(options,component){registrations.push({options,component});return()=>{}}})
       client.provide('layout',{})
-      const plugin=await loadClientBundle(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),metadata.name)
+      let plugin
+      vm.runInNewContext(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),{
+        window:{__ModuleLoader__:{load({factory}){plugin=factory(name=>{if(name==='react')return React;if(name==='@deepseek-ai/dsh-client-ui-primitives')return {MarkdownText};if(name==='zod')return {z};throw new Error('Unexpected dependency')})}}},
+      })
       await client.plugin(plugin)
       assert.equal(registrations.length,2)
       assert.equal(registrations.find(r=>r.options.name==='sidebar.panellist').options.label,'Orivii')
@@ -65,6 +66,10 @@ test('built Orivii activates through actual DSH Client Remote and Host Gateway; 
       assert.equal(throughClient.ok,true)
       assert.equal(throughClient.value.ok,true)
       assert.equal(throughClient.value.value.unlocked,false)
+      const live=await client.remote.dotCompanion.command({action:'liveSettings'})
+      assert.equal(live.ok,true,'new settings action must pass the Host boundary')
+      assert.equal(live.value.error.code,'locked','only the workspace lock should reject this request')
+      for(const action of ['voiceStart','voiceModels','voiceCheck']){const refused=await client.remote.dotCompanion.command({action});assert.ok(refused.ok===false||refused.value?.ok===false,'voice calls are unavailable in this release')}
       for(const request of [{action:'resume'},{action:'identitySwitch',identityId:'12345678-1234-4234-8234-123456789012'},{action:'identityCreate',name:'Test',password:'test-only-password'},{action:'sessionPolicy',mode:'8h'}]){
         const response=await client.remote.dotCompanion.command(request)
         assert.equal(response.ok,true,'identity action must pass both strict gateway contracts');assert.equal(response.value.error.code,'locked')
@@ -88,6 +93,8 @@ test('strict contract accepts frontend setup, unlock, snapshots, edits and legac
     {action:'profile',profile:{preferredName:'亲爱的',identity:'研究生',preferences:'喜欢简短聊天'}},
     {action:'settings',settings:{autoProfile:false}},
     {action:'settings',settings:{autoLearn:false}},
+    {action:'liveSettings'},
+    {action:'liveSettings',settings:{mediaEnabled:true}},
     {action:'memories',layer:'knowledge'},
     {action:'memories',layer:'memes'},
     {action:'setup',workspace:'H:\\DotWorkspace',password:'test-only-password',plaintext:false},
@@ -172,7 +179,7 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
     let plugin
     vm.runInNewContext(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),{
       window:{__ModuleLoader__:{load({factory}){plugin=factory(name=>{if(name==='react')return React;if(name==='@deepseek-ai/dsh-client-ui-primitives')return {MarkdownText};if(name==='zod')return {z};throw new Error('Unexpected dependency')})}}},
-      AbortController,setInterval,clearInterval,setTimeout,clearTimeout,crypto,
+      AbortController,setInterval,clearInterval,setTimeout,clearTimeout,crypto,btoa,atob,Blob,
     })
     let fiber=client.plugin(plugin);await fiber
     // Root contexts bypass injection checks. Prove this test exercises a plugin
@@ -254,6 +261,19 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
       assert.equal(renderer.root.findAll(n=>n.props.className==='dot-inbox').length,0,'chat management must not occupy the main panel')
       await click(button('更多'))
       await click(button('设置'))
+      await click(button('外观'))
+      await change(field('我的气泡'),'#e2d7ff')
+      await change(field('Orivii 颜色'),'#abcdef')
+      await click(button('保存外观'))
+      await waitFor(()=>Boolean(button('我的 Orivii')))
+      const appearance=await host.dotCompanion.host.identities.runtime(workspace).vault.read()
+      assert.equal(appearance.catalog.settings.bubbleColor,'#e2d7ff')
+      assert.equal(appearance.catalog.settings.characterColor,'#abcdef')
+      const bytes=new Blob(['synthetic upload']),upload={name:'sample.txt',size:bytes.size,type:'text/plain',slice:(...args)=>bytes.slice(...args)}
+      await act(async()=>{field('选择图片或文件').props.onChange({target:{files:[upload],value:'sample.txt'}})})
+      await waitFor(()=>renderer.root.findAll(n=>n.props.className==='dot-draft-file').some(n=>n.findAllByType('span').some(s=>s.children.includes('sample.txt'))))
+      assert.ok(calls.includes('fileFinish'),'upload uses the actual strict host gateway')
+      await click(button('移除 sample.txt'))
       await click(button('我的 Orivii'))
       await waitFor(()=>renderer.root.findAllByProps({'aria-label':'切换 Orivii'}).length===1)
       assert.equal(renderer.root.findByProps({'aria-label':'解锁期限'}).props.value,'run')
@@ -294,6 +314,9 @@ test('rendered workspace form uses its injected plugin context for setup, chat, 
         await click(button('更多'));await click(button('设置'));await click(button('我的 Orivii'))
         await waitFor(()=>find('select',n=>n.props['aria-label']==='切换 Orivii'))
       }
+      await click(button('返回设置'))
+      await click(button('陪伴与连接'))
+      await waitFor(()=>renderer.root.findAllByType('p').some(n=>n.children.some(s=>typeof s==='string'&&s.includes('画面默认交给当前对话模型'))))
       await click(button('返回设置'))
       await click(button('关闭'))
       await click(button('更多'))

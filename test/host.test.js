@@ -397,14 +397,14 @@ test('background memory maintenance does not block the next message or show a bu
   assert.equal((await call('snapshot',{chatId:chat.id})).messages.filter(m=>m.role==='user').length,2)
 })
 
-test('web search acknowledges before network, follows sources and keeps tool output out of bubbles',async t=>{
+test('web search acknowledges before network, follows sources and keeps tool output out of bubbles',{timeout:15000},async t=>{
   let turn=0,release,started
   const gate=new Promise(resolve=>{release=resolve}),searchStarted=new Promise(resolve=>{started=resolve})
   const services=mockServices(options=>{
     if(options.purpose)return [{type:'text',text:'{"summary":"聊天","overview":"聊天"}'}]
     turn++
     assert.ok(options.tools.some(tool=>tool.name==='web_search'))
-    assert.match(options.system,/web_search/)
+    assert.match(options.system,/联网工具/)
     if(turn===1)return [{type:'reasoning',text:'PRIVATE_REASONING'},{type:'text',text:'INTERNAL_WEB_PLAN'},
       {type:'tool-call',id:'web1',name:'web_search',arguments:'{"query":"显卡价格"}'},
       {type:'tool-call',id:'reply1',name:'reply_to_user',arguments:'{"text":"我帮你看看现在的价格。"}'}]

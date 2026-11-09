@@ -9,6 +9,7 @@ export function poseForEye(mode,gaze={x:0,y:0}) {
   if(mode==='idle'){p.gazeX=gaze.x;p.gazeY=gaze.y}
   if(mode==='input'){p.gazeY=6;p.lid=.08}
   if(mode==='responding'){p.lid=.12;p.gazeY=-2}
+  if(mode==='listening'){p.lid=.04;p.gazeY=3}
   if(mode==='searching')p.scan=1
   if(mode==='recalling'){p.gazeX=5;p.gazeY=-5;p.tilt=3}
   if(mode==='agree')p.check=1

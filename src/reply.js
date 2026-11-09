@@ -17,6 +17,20 @@ export function bubbleParts(text) {
   return parts.length>16?[...parts.slice(0,15),parts.slice(15).join('\n\n')]:parts.length?parts:[text]
 }
 
+// Keep archived messages intact; give every attached image its own display
+// bubble even when a model sends its caption and files in the same message.
+export function messageBubbleParts(message) {
+  const parts=(message.text.trim()?(message.role==='assistant'?bubbleParts(message.text):[message.text]):[]).map((text,i)=>({key:'text:'+i,kind:'text',text}))
+  const files=(message.attachments||[]).filter(file=>file.kind!=='image')
+  if(files.length){
+    if(!parts.length)parts.push({key:'files',kind:'files',text:''})
+    parts.at(-1).attachments=files
+  }
+  if(!parts.length&&(message.connection||message.webSources?.length))parts.push({key:'text:0',kind:'text',text:''})
+  for(const file of message.attachments||[])if(file.kind==='image')parts.push({key:'image:'+file.id,kind:'image',text:'',attachments:[file]})
+  return parts
+}
+
 const replySegments=typeof Intl.Segmenter==='function'?new Intl.Segmenter(undefined,{granularity:'grapheme'}):null
 export function nextReplyText(current,target) {
   if(!target.startsWith(current))return target

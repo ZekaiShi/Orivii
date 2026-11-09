@@ -8,13 +8,15 @@
 
 ## Get started
 
+Version 1.0.2 is available through GitHub Release; npm availability can be checked in the registry.
+
 With a working DSH installation and a configured model, install the prebuilt plugin:
 
 ```sh
-dsh plugin --profile web add dsh-orivii@1.0.1
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```
 
-On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add **`dsh-orivii@1.0.1`** through the app's plugin manager. Follow the host's restart instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
+On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add **`https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz`** through the app's plugin manager. Follow the host's restart instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
 
 Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm package is **`dsh-orivii`**; the npm package named `dsh-companion` is a different project. [Full installation guide](docs/getting-started.md)
 
@@ -37,6 +39,12 @@ Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm pack
 - **Less repeated unlocking.** Choose the current DSH run, 8 hours, or 24 hours. Refreshing or switching does not extend the deadline. A manual lock or host restart requires unlocking again.
 
 Reminders require the DSH host to remain running and the relevant identity to remain unlocked. They arrive in the chat, not as an alarm that works after shutdown.
+
+## New in 1.0.2
+
+Send images and files from the composer, clipboard, or drag and drop. Each image gets its own bubble with a compact circular download button. Orivii can deliver real image and text-file attachments, reuse installed Bilibili tools, and customize bubble and character colors. Tool discovery and thinking-mode tool replay are more reliable.
+
+[Images, Bilibili, and appearance guide (Chinese)](docs/interaction-preview.md)
 
 ## Make it yours
 
@@ -66,7 +74,7 @@ The detailed guides currently use Chinese and match the UI labels:
 
 Chat and memory files stay in your chosen workspace, with optional password encryption. **Local storage does not mean offline processing**: your configured model receives the context needed to answer; web services receive necessary queries. Keep your password safe—lost encryption passwords cannot be recovered.
 
-Interruptible voice calls, synchronized co-watching, general attachment delivery, and new messaging channels are planned work, **not available features of version 1.0.1**. See the [roadmap](UPDATES.md) and [release notes](CHANGELOG.md).
+Voice calls are not included in 1.0.2. Co-watching, co-reading, and public-topic exploration are optional previews, off by default and dependent on host services. Office/PDF parsing and new messaging channels remain planned work. See the [roadmap](UPDATES.md) and [release notes](CHANGELOG.md).
 
 Issues and focused PRs are welcome. Use fictional data for reproductions and never attach credentials or real memory archives. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Media credits](media/README.md)
 

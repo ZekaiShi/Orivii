@@ -1,6 +1,6 @@
 {
   "name": "dsh-orivii",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Orivii: an expressive personal assistant for DeepSeek Harness with shared memory, proactive reminders and background work",
   "type": "module",
   "main": "index.js",
@@ -36,6 +36,7 @@
     "@deepseek-ai/cordis": "~4.0.5"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-attachment-local": "0.2.1-rc.2",
     "saxes": "6.0.0",
     "turndown": "7.2.4",
     "zod": "4.4.3"
@@ -51,20 +52,18 @@
     }
   },
   "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
     "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
     "@deepseek-ai/dsh-host-directory-picker-auto": "0.2.1-rc.2",
     "@deepseek-ai/dsh-host-directory-picker-native": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm-deepseek": "0.2.1-rc.2",
     "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
     "jsdom": "26.1.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-test-renderer": "18.3.1"
+    "react-test-renderer": "18.3.1",
+    "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2"
   },
   "homepage": "https://github.com/ZekaiShi/Orivii#readme",
   "repository": {
@@ -81,5 +80,9 @@
     "personal-assistant",
     "memory",
     "agent"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

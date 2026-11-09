@@ -1,5 +1,50 @@
 // Keep closing surfaces mounted only for their short exit, and make them inert.
 // Privacy transitions (lock, leaving Dot) bypass retention entirely.
+export function createSendTransition(){
+  const pending=new Map(),running=new Set()
+  function clear(){pending.clear();for(const stop of [...running])stop()}
+  function capture(id,composer){
+    const doc=composer?.ownerDocument,win=doc?.defaultView
+    if(!composer||doc.hidden||win.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return
+    const r=composer.getBoundingClientRect()
+    if(r.width&&r.height)pending.set(id,{x:r.x,y:r.y,width:r.width,height:r.height,at:Date.now()})
+    for(const [key,v]of pending)if(Date.now()-v.at>2000)pending.delete(key)
+  }
+  function arrive(id,row){
+    if(!row||!pending.has(id))return
+    const from=pending.get(id);pending.delete(id)
+    const doc=row.ownerDocument,win=doc.defaultView,bubble=row.querySelector('.dot-bubble')
+    if(!bubble?.animate||doc.hidden||win.matchMedia?.('(prefers-reduced-motion: reduce)').matches||Date.now()-from.at>2000)return
+    row.dataset.dotTransport='true'
+    let frame,overlay,animations=[],closed=false
+    const saved=bubble.style.visibility
+    bubble.style.visibility='hidden'
+    const stop=()=>{if(closed)return;closed=true;win.cancelAnimationFrame(frame);animations.forEach(a=>a.cancel());overlay?.remove();bubble.style.visibility=saved;doc.removeEventListener('visibilitychange',hidden);running.delete(stop)}
+    const hidden=()=>{if(doc.hidden)stop()}
+    running.add(stop);doc.addEventListener('visibilitychange',hidden)
+    frame=win.requestAnimationFrame(()=>{frame=win.requestAnimationFrame(()=>{
+      if(!row.isConnected){stop();return}
+      const to=bubble.getBoundingClientRect(),style=win.getComputedStyle(bubble),fill=win.getComputedStyle(bubble,'::before').backgroundColor
+      if(!to.width||!to.height){stop();return}
+      overlay=bubble.cloneNode(true);overlay.removeAttribute('id');overlay.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'))
+      overlay.setAttribute('aria-hidden','true');overlay.className='dot-send-flight'
+      Object.assign(overlay.style,{position:'fixed',visibility:'visible',zIndex:1000,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden',margin:0,left:to.x+'px',top:to.y+'px',width:to.width+'px',height:to.height+'px',padding:style.padding,font:style.font,lineHeight:style.lineHeight,color:style.color,background:fill||style.backgroundColor,borderRadius:style.borderRadius,boxShadow:style.boxShadow})
+      overlay.querySelectorAll('*').forEach(e=>{e.style.animation='none';e.style.color='inherit'})
+      doc.body.append(overlay);bubble.style.visibility='hidden';row.dataset.dotTransport='true'
+      const dx=from.x-to.x,dy=from.y-to.y
+      const movement=overlay.animate([
+        {transform:`translate(${dx}px,${dy}px)`,width:from.width+'px',height:from.height+'px',borderRadius:'24px',offset:0},
+        {transform:'translate(0,-6px)',width:to.width+'px',height:to.height+'px',borderRadius:style.borderRadius,offset:.74},
+        {transform:'translate(0,2px)',offset:.88},
+        {transform:'translate(0,0)',width:to.width+'px',height:to.height+'px',borderRadius:style.borderRadius,offset:1},
+      ],{duration:620,easing:'cubic-bezier(.22,.8,.28,1)',fill:'both'})
+      animations.push(movement)
+      for(const child of overlay.children)animations.push(child.animate([{opacity:.35},{opacity:1}],{duration:400,fill:'both'}))
+      movement.onfinish=stop
+    })})
+  }
+  return {capture,arrive,clear}
+}
 export function createDotMotion(React) {
   const reduced=()=>typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   function Motion({show,children,immediate=false}) {

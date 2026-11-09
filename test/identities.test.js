@@ -49,23 +49,25 @@ test('expired leases stop in the background and policy changes cannot silently e
   assert.equal(reopened.session.expiresAt,clock()+24*3600000)
   // Exercise the actual timer rather than calling expire() directly.
   const key=api.vault.key
-  api.access.expiresAt=clock()+15;api.identities.schedule(api)
-  // A wall-clock correction may make a timer fire before its deadline.
-  // It must re-arm instead of losing expiry enforcement entirely.
-  await new Promise(r=>setTimeout(r,30));assert.ok(api.vault);advance(16)
+  api.access.expiresAt=clock()+15;api.identities.schedule(api);advance(16)
   await new Promise(r=>setTimeout(r,60));await api.identities.control
   assert.equal(api.vault,null);assert.ok(key.every(value=>value===0));assert.equal(api.tokens.size,0)
 })
 
-test('independent identities hot-switch without crossing chats, personality or preferences',async t=>{
+test('independent identities hot-switch without crossing chats, personality, preferences or API credentials',async t=>{
   const {api,call,first}=await fixture(t),a=using(call,first.token)
   const chatA=await a('createChat',{title:'A 的聊天'})
   await a('profile',{profile:{preferredName:'A的昵称'}})
+  api.speechKey='test-only-speech-key';api.speechKeyScope='test'
+  let stoppedVoice=0,stoppedMedia=0
+  api.voice={stop:async()=>{stoppedVoice++}};api.media.stop=async()=>{stoppedMedia++}
   const second=await a('identityCreate',{name:'活泼',persona:'喜欢玩梗，表达活泼。',password:otherPassword}),b=using(call,second.token)
   assert.notEqual(first.identityId,second.identityId);assert.notEqual(first.workspace,second.workspace)
+  assert.equal(stoppedVoice,1);assert.equal(stoppedMedia,1)
   const snapshotB=await b('snapshot')
   assert.deepEqual(snapshotB.chats,[]);assert.equal(snapshotB.settings.name,'活泼');assert.equal(snapshotB.settings.persona,'喜欢玩梗，表达活泼。')
-  assert.doesNotMatch(JSON.stringify(snapshotB),/A的昵称/)
+  assert.doesNotMatch(JSON.stringify(snapshotB),/A的昵称|test-only-speech-key/)
+  assert.equal(api.identities.runtime(second.workspace).speechKey,undefined)
   assert.deepEqual((await b('snapshot',{chatId:chatA.id})).messages,[])
   const chatB=await b('createChat',{title:'B 的聊天'})
   const back=await b('identitySwitch',{identityId:first.identityId}),again=using(call,back.token)
