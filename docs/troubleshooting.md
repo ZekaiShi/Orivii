@@ -19,7 +19,7 @@
 
 `npm view` 只是查询仓库，不会发布或安装。E404 表示该注册表没有返回你请求的包或版本，也可能是私有包权限问题。
 
-Orivii 的正式 npm 包是 **`dsh-orivii`**，当前版本以 npm 注册表的实际返回为准。Windows 可以用以下只读命令检查官方注册表：
+Orivii 的正式 npm 包是 **`dsh-orivii`**，1.0.2 已发布。Windows 可以用以下只读命令检查官方注册表：
 
 ```powershell
 npm.cmd view dsh-orivii@1.0.2 name version dist.tarball --registry=https://registry.npmjs.org/ --prefer-online

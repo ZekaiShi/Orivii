@@ -8,7 +8,7 @@
 
 命令行安装需要 Node.js **24.2.0 或更高的兼容版本**，以及兼容的 DSH **0.2.1** 系列。未安装 DSH 时，先按 [DSH 官方说明](https://github.com/deepseek-ai/deepseek-harness) 完成安装和模型配置。
 
-1.0.2 的安装示例使用 GitHub Release 地址。可用 npm 版本可用 `npm.cmd view dsh-orivii versions --registry=https://registry.npmjs.org/` 查询；若注册表尚无 1.0.2，请使用下方 Release 方式。
+1.0.2 已发布到 npm。优先使用下方 npm 包名安装，也可选择 GitHub Release 地址或离线安装包。
 
 ## 1. 选择你的安装方式
 
@@ -16,10 +16,10 @@
 
 ### DSH Desktop
 
-打开应用内的插件管理，添加以下插件包地址：
+打开应用内的插件管理，添加以下 npm 包：
 
 ```text
-https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
+dsh-orivii@1.0.2
 ```
 
 按宿主提示完成安装并重新启动。Desktop 与 Web 使用各自的插件配置；在 Web 中安装，不代表 Desktop 也已安装。
@@ -31,7 +31,7 @@ https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
 ```powershell
 node --version
 dsh.cmd --version
-dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
+dsh.cmd plugin --profile web add dsh-orivii@1.0.2
 ```
 
 如果提示找不到 `dsh.cmd`，先确认 DSH 已安装、命令所在目录在 PATH 中，再重新打开 PowerShell。仅安装了 Desktop 的用户可使用上面的应用内入口。
@@ -43,7 +43,7 @@ dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/dow
 ```sh
 node --version
 dsh --version
-dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
+dsh plugin --profile web add dsh-orivii@1.0.2
 ```
 
 在 DSH 后端所在的环境执行。例如 DSH 运行在 Linux 服务器上，就在该服务器安装；浏览器本身不负责安装插件。
@@ -52,7 +52,7 @@ dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/downloa
 
 市场目录已收录 **Orivii**，分类为 **AGI 探索**。在支持市场的 DSH 插件管理中搜索 `Orivii`，核对仓库是 **ZekaiShi/Orivii** 后安装。
 
-不同市场客户端的同步时间可能不同。暂时搜不到时，使用上面的 Release 地址安装即可。[查看收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
+不同市场客户端的同步时间可能不同。暂时搜不到时，使用上面的 npm 方式或下方 Release 地址安装即可。[查看收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
 
 <details>
 <summary><strong>备选：GitHub Release 地址或本地安装包</strong></summary>
