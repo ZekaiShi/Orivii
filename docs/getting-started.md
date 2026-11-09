@@ -16,7 +16,7 @@
 
 ### DSH Desktop
 
-打开应用内的插件管理，添加以下 npm 包：
+打开应用内的插件管理，添加以下插件包地址：
 
 ```text
 https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
@@ -52,7 +52,7 @@ dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/downloa
 
 市场目录已收录 **Orivii**，分类为 **AGI 探索**。在支持市场的 DSH 插件管理中搜索 `Orivii`，核对仓库是 **ZekaiShi/Orivii** 后安装。
 
-不同市场客户端的同步时间可能不同。暂时搜不到时，使用上面的 npm 方式即可。[查看收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
+不同市场客户端的同步时间可能不同。暂时搜不到时，使用上面的 Release 地址安装即可。[查看收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
 
 <details>
 <summary><strong>备选：GitHub Release 地址或本地安装包</strong></summary>
