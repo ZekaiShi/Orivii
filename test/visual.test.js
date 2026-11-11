@@ -64,6 +64,7 @@ test('markup previews strip executable and navigating elements and use an opaque
   assert.doesNotMatch(html,/<iframe|<form|<input|foreignObject|onclick|onload|parent.secret|https:\/\/bad/)
   const document=new JSDOM(html).window.document
   assert.equal(document.scripts.length,1);assert.equal(document.scripts[0].textContent,PREVIEW_SCRIPT)
+  assert.equal(PREVIEW_SCRIPT.includes('\r'),false,'the CSP input must use browser-normalized line endings on every platform')
   assert.equal(createHash('sha256').update(PREVIEW_SCRIPT).digest('base64'),PREVIEW_SCRIPT_HASH)
   assert.ok(html.includes("script-src 'sha256-"+PREVIEW_SCRIPT_HASH+"'"));assert.match(html,/connect-src 'none'/);assert.match(html,/img-src 'none'/)
   const Preview=createArtifactPreview(React,{rpc:async()=>({kind:'html',html}),markdown:text=>text});let renderer

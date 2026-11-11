@@ -8,7 +8,8 @@ import {VISUAL_ICONS} from './visual-icons.js'
 const previewTags=new Set('html head body title style div span p section article main header footer aside nav h1 h2 h3 h4 h5 h6 ul ol li dl dt dd pre code blockquote strong em b i u s small sub sup br hr table thead tbody tfoot tr th td caption colgroup col figure figcaption details summary svg g path circle ellipse rect line polyline polygon text tspan defs lineargradient radialgradient stop clippath mask symbol use'.split(' '))
 const previewRemove=new Set(['header','footer','h1','script','iframe','object','embed','link','meta','base','form','input','textarea','select','button','template','foreignobject','image','img','video','audio','source','animate','animatetransform','set','annotation-xml','math'])
 const previewAttributes=new Set('id class style title role aria-label aria-hidden width height viewbox preserveaspectratio x y x1 y1 x2 y2 cx cy r rx ry d points fill fill-opacity stroke stroke-width stroke-linecap stroke-linejoin stroke-opacity opacity transform font-size font-family font-weight text-anchor dominant-baseline dx dy offset stop-color stop-opacity gradientunits gradienttransform clippathunits clip-path mask href xlink:href xmlns colspan rowspan scope align data-icon data-template data-ratio data-bubble data-color data-swatch data-orivii-color-sample'.split(' '))
-export const PREVIEW_SCRIPT='('+runPreviewCanvas.toString()+')('+groupBubbleBlocks.toString()+','+previewColorPolicy.toString()+')'
+// HTML parsers normalize line endings before checking an inline script's CSP hash.
+export const PREVIEW_SCRIPT=('('+runPreviewCanvas.toString()+')('+groupBubbleBlocks.toString()+','+previewColorPolicy.toString()+')').replace(/\r\n?/g,'\n')
 export const PREVIEW_SCRIPT_HASH=createHash('sha256').update(PREVIEW_SCRIPT).digest('base64')
 
 export function previewDocument(body){
