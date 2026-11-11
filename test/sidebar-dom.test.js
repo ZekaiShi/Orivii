@@ -90,6 +90,11 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
       await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20))})
     }}
     async function change(element,value){assert.ok(element);await act(async()=>{const prototype=element.tagName==='TEXTAREA'?dom.window.HTMLTextAreaElement.prototype:dom.window.HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value').set.call(element,value);element.dispatchEvent(new dom.window.Event('input',{bubbles:true}))})}
+    async function createChat(){
+      const previous=doc.querySelector('.dot-sidebar-chat-title[aria-current="page"]')
+      await click(button('新建 Orivii 聊天'))
+      await waitFor(()=>{const selected=doc.querySelector('.dot-sidebar-chat-title[aria-current="page"]');return selected&&selected!==previous&&doc.querySelector('.dot-contact span')?.textContent==='新的聊天'})
+    }
     await click(button('Orivii'))
     assert.equal(button('Orivii').getAttribute('aria-expanded'),'false')
     assert.equal(doc.querySelector('.dot-sidebar-tree'),null)
@@ -143,8 +148,7 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
     for(const text of ['第一段聊天的小星星','第二段聊天的小月亮']){
       replyGate=new Promise(resolve=>{releaseReply=resolve})
       sendGate=new Promise(resolve=>{releaseSend=resolve})
-      await click(button('新建 Orivii 聊天'))
-      await waitFor(()=>doc.querySelector('.dot-contact span')?.textContent==='新的聊天')
+      await createChat()
       await change(input('消息'),text)
       await click(button('发送消息'))
       assert.equal(doc.querySelector('.dot-outgoing .dot-bubble')?.textContent,text,'outgoing bubble appears before host acceptance')
@@ -163,8 +167,7 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
       assert.ok(doc.querySelector('.dot-incoming .dot-rich-text [data-native-markdown]'),'reply uses the native Markdown component')
     }
     live=true;bodyGate=new Promise(r=>{releaseBody=r});endGate=new Promise(r=>{releaseEnd=r})
-    await click(button('新建 Orivii 聊天'))
-    await waitFor(()=>doc.querySelector('.dot-contact span')?.textContent==='新的聊天')
+    await createChat()
     await change(input('消息'),'给你一颗小爱心')
     await click(button('发送消息'))
     await waitFor(()=>doc.querySelector('.dot-contact .dot-eye')?.dataset.eyeState==='heart')
@@ -188,8 +191,7 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
       await fs.writeFile(path.join(base,'dot-ui-0.8.0-frame.html'),'<!doctype html><meta charset="utf-8"><style>html,body{height:100%;margin:0;font:14px "Segoe UI",sans-serif}body{overflow:hidden}</style>'+doc.querySelector('.dot-page').outerHTML)
     }
     live=false;legacyTags=true
-    await click(button('新建 Orivii 聊天'))
-    await waitFor(()=>doc.querySelector('.dot-contact span')?.textContent==='新的聊天')
+    await createChat()
     replyGate=new Promise(r=>{releaseReply=r});sendGate=new Promise(r=>{releaseSend=r})
     for(const text of ['连续输入一','连续输入二','连续输入三']){
       await change(input('消息'),text)

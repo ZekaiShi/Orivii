@@ -1,6 +1,6 @@
 # 03 · 多个 Orivii 与解锁期限
 
-[教程目录](README.md) · 上一篇：[日常使用](usage.md) · 下一篇：[数据与迁移](data-and-privacy.md)
+[教程目录](README.md) · 上一篇：[日常使用](usage.md) · 下一篇：[图片与外观](interaction-preview.md)
 
 一个角色可以有多个聊天。想要**独立的记忆和相处方式**时，再创建另一个 Orivii。
 

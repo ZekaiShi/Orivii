@@ -5,6 +5,7 @@ import {createDotMotion,createSendTransition} from './motion.js'
 import {APPEARANCE_KEYS,appearanceStyle} from './appearance.js'
 import {createBiliConnection} from './bili-client.js'
 import {createFileCard,uploadChatFile} from './file-client.js'
+import {createArtifactPreview} from './visual-client.js'
 import {createDotEye,DOT_RING} from './eye.js'
 import {messageBubbleParts,createPacedReply} from './reply.js'
 import {publicBubble} from './expression.js'
@@ -68,6 +69,7 @@ function registerUi(ctx) {
   const LiveSettings=createLiveSettings(React,{rpc})
   const BiliConnection=createBiliConnection(React,{rpc})
   const FileCard=createFileCard(React,{rpc})
+  const ArtifactPreview=createArtifactPreview(React,{rpc,markdown:text=>h('div',{className:'dot-rich-text'},h(require('@deepseek-ai/dsh-client-ui-primitives').MarkdownText,{text,labels:markdownLabels}))})
   const IdentitySettings=createIdentitySettings(React,{rpc})
   const avatar=(size=36)=>h('span',{className:'dot-avatar',style:{width:size,height:size}},h(Ring,{size:Math.round(size*.65)}))
   function openDotRow(){
@@ -370,16 +372,22 @@ function registerUi(ctx) {
     }
     function messageRow(m){
       m=publicBubble(m);if(!m.text.trim()&&!m.attachments?.length)return null
-      return h(PacedReply,{key:m.requestId||m.id,message:m,pace:m.role==='assistant'&&m.time>=enteredAt.current,render:renderMessageRow,onProgress:()=>{if(scroll.current&&stickToBottom.current)scroll.current.scrollTop=scroll.current.scrollHeight}})
+      return h(PacedReply,{key:m.requestId||m.id,message:m,pace:m.role==='assistant'&&!m.presentation?.artifactOnly&&m.time>=enteredAt.current,render:renderMessageRow,onProgress:()=>{if(scroll.current&&stickToBottom.current)scroll.current.scrollTop=scroll.current.scrollHeight}})
     }
     function renderMessageRow(m){
-      const parts=messageBubbleParts(m),detailsIndex=parts.findLastIndex(part=>part.kind!=='image')
-      return h('div',{ref:node=>sendTransition.current.arrive(m.requestId||m.id,node),className:'dot-message-row '+(m.role==='user'?'dot-outgoing':'dot-incoming')+(m.live?' dot-live-reply':''),key:m.requestId||m.id,'data-dot-new':m.time>=enteredAt.current,'data-message-id':m.id},m.role==='assistant'?avatar(28):null,
-        h('div',{className:'dot-message-stack'},...parts.map((part,i)=>h('div',{className:'dot-bubble'+(part.kind==='image'?' dot-image-bubble':''),key:part.key,style:{'--bubble-delay':Math.min(i*100,400)+'ms'}},h('div',{className:'dot-bubble-content'},part.text?richText(part.text):null,
+      const parts=messageBubbleParts(m),detailsIndex=parts.findLastIndex(part=>part.kind==='text'||part.kind==='files')
+      const rendered=parts.map((part,i)=>{
+        const delay=Math.min(i*100,400),common={key:part.key,bubble:true,delay,onError:fail}
+        if(part.kind==='artifact')return h(ArtifactPreview,{...common,file:part.file})
+        if(part.kind==='markup')return h(ArtifactPreview,{...common,source:part.source,format:part.format})
+        return h('div',{className:'dot-bubble'+(part.kind==='image'?' dot-image-bubble':part.kind==='markup-pending'?' dot-artifact-bubble':''),key:part.key,style:{'--bubble-delay':delay+'ms'}},h('div',{className:'dot-bubble-content'},part.text?richText(part.text):null,
+          part.kind==='markup-pending'?h('p',{className:'dot-artifact-status',role:'status'},'正在整理图文…'):null,
           part.attachments?.length?h('div',{className:'dot-file-list'},...part.attachments.map(file=>h(FileCard,{key:file.id,file,onError:fail}))):null,
           i===detailsIndex&&m.connection==='bilibili'?h(BiliConnection,{autoLogin:m.time>=enteredAt.current,messageId:m.id}):null,
-          i===detailsIndex&&m.webSources?.length?h('details',{className:'dot-citations'},h('summary',null,'来源'),...m.webSources.filter(s=>/^https?:\/\//i.test(s.url)).map(s=>h('a',{key:s.url,href:s.url,target:'_blank',rel:'noopener noreferrer'},s.title||s.url))):null))),
-          h('div',{className:'dot-message-meta'},h('span',null,m.status==='sending'?'发送中…':m.status==='failed'?'发送失败，可重试':m.live?'正在输入…':new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})),m.incomplete?h('span',null,'回复达到长度上限'):null,m.status==='failed'?button('重试发送',()=>retrySend(m),'dot-text-button'):null)))
+          i===detailsIndex&&m.webSources?.length?h('details',{className:'dot-citations'},h('summary',null,'来源'),...m.webSources.filter(s=>/^https?:\/\//i.test(s.url)).map(s=>h('a',{key:s.url,href:s.url,target:'_blank',rel:'noopener noreferrer'},s.title||s.url))):null))
+      })
+      return h('div',{ref:node=>sendTransition.current.arrive(m.requestId||m.id,node),className:'dot-message-row '+(m.role==='user'?'dot-outgoing':'dot-incoming')+(m.live?' dot-live-reply':''),key:m.requestId||m.id,'data-dot-new':m.time>=enteredAt.current,'data-message-id':m.id},m.role==='assistant'?avatar(28):null,
+        h('div',{className:'dot-message-stack'},...rendered,h('div',{className:'dot-message-meta'},h('span',null,m.status==='sending'?'发送中…':m.status==='failed'?'发送失败，可重试':m.live?'正在输入…':new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})),m.incomplete?h('span',null,'回复达到长度上限'):null,m.status==='failed'?button('重试发送',()=>retrySend(m),'dot-text-button'):null)))
     }
     function thinkingBubble(){return h('div',{className:'dot-message-row dot-incoming dot-pending',key:'thinking'},avatar(28),
       h('div',{className:'dot-message-stack'},h('div',{className:'dot-bubble'},h('div',{className:'dot-typing',role:'status','aria-label':snapshot?.partial?.stage||'正在回复'},h('i'),h('i'),h('i')),h('span',{className:'dot-thinking-label'},snapshot?.partial?.stage||(sending?'正在发送…':'正在思考…')))))}
@@ -451,10 +459,11 @@ function registerUi(ctx) {
           ...[['name','名字']].map(([key,label])=>h('label',{key},h('span',null,label),h(key==='persona'?'textarea':'input',{value:settings[key]||'',onChange:e=>setSettings(s=>({...s,[key]:e.target.value}))}))),
           h('label',{className:'dot-check'},h('input',{type:'checkbox',checked:settings.eyeAnimation!==false,onChange:e=>setSettings(old=>({...old,eyeAnimation:e.target.checked}))}),'角色动画'),
           h('label',{className:'dot-check'},h('input',{type:'checkbox',checked:settings.webSearch!==false,onChange:e=>setSettings(old=>({...old,webSearch:e.target.checked}))}),'需要时联网查资料'),
+          h('label',{className:'dot-check'},h('input',{type:'checkbox',checked:settings.visualReplies!==false,onChange:e=>setSettings(old=>({...old,visualReplies:e.target.checked}))}),'优先用图文解释'),
           h('details',{className:'dot-advanced'},h('summary',null,'连接与模型'),
           h('label',null,h('span',null,'模型'),h('select',{value:settings.provider?JSON.stringify([settings.provider,settings.model]):'',onChange:e=>{const [provider,model]=e.target.value?JSON.parse(e.target.value):['',''];setSettings(s=>({...s,provider,model}))}},h('option',{value:''},'使用 DSH 默认模型'),...models.map(m=>h('option',{key:m.provider+'/'+m.id,value:JSON.stringify([m.provider,m.id])},m.provider+' / '+m.name)))),
           (!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?h('label',null,'自定义表达方式',h('textarea',{value:settings.persona||'',onChange:e=>setSettings(old=>({...old,persona:e.target.value}))})):null),
-          button('保存设置',()=>action(async()=>{const changes=Object.fromEntries(['name','eyeAnimation','webSearch','provider','model',...((!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?['persona']:[])].filter(key=>settings[key]!==prefs[key]).map(key=>[key,settings[key]]));await rpc('settings',{settings:changes});await refresh();setDrawer(null)}),'dot-save'),
+          button('保存设置',()=>action(async()=>{const changes=Object.fromEntries(['name','eyeAnimation','webSearch','visualReplies','provider','model',...((!snapshot?.extensionAvailable||snapshot?.personaAvailable===false)?['persona']:[])].filter(key=>settings[key]!==prefs[key]).map(key=>[key,settings[key]]));await rpc('settings',{settings:changes});await refresh();setDrawer(null)}),'dot-save'),
           button('我的 Orivii',()=>setDrawer('identities')),
           button('外观',()=>setDrawer('appearance')),
           button('陪伴与连接',()=>setDrawer('liveSettings')),

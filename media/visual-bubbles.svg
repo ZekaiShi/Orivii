@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="title desc">
+  <title id="title">Orivii 1.1.0 原生图文气泡</title>
+  <desc id="desc">原创排版示意：用户要求比较两个方案，Orivii 用对比、图表和数量滑块回答。所有数据均为虚构演示。</desc>
+  <defs>
+    <linearGradient id="ambient" x2="1" y2="1"><stop stop-color="#252035"/><stop offset="1" stop-color="#131316"/></linearGradient>
+    <linearGradient id="accent"><stop stop-color="#c6b3f3"/><stop offset="1" stop-color="#f2b3ce"/></linearGradient>
+  </defs>
+  <rect width="1200" height="640" rx="30" fill="#131316"/>
+  <rect width="1200" height="640" rx="30" fill="url(#ambient)"/>
+  <g font-family="system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif">
+    <svg x="48" y="35" width="64" height="64" viewBox="0 0 100 100"><circle cx="50" cy="43" r="26.6" fill="none" stroke="#f7f7fa" stroke-width="9.2"/><circle cx="50" cy="43" r="8" fill="#f7f7fa"/><circle cx="53" cy="40" r="2.4" fill="#131316"/></svg>
+    <text x="123" y="73" fill="#f6f5fa" font-size="30" font-weight="650">Orivii</text>
+    <rect x="246" y="44" width="84" height="34" rx="17" fill="#393044"/>
+    <text x="288" y="67" text-anchor="middle" fill="#e2c8ee" font-size="17" font-weight="600">1.1.0</text>
+    <text x="1148" y="69" text-anchor="end" fill="#b7afc3" font-size="17">原生图文 · 演示数据</text>
+    <text x="60" y="146" fill="#f6f5fa" font-size="36" font-weight="650">把想法直接聊成图。</text>
+    <text x="60" y="182" fill="#c7c0d0" font-size="20">完整的内容，接在每一句对话里。</text>
+    <rect x="744" y="215" width="396" height="58" rx="26" fill="#f5f2fa"/>
+    <text x="770" y="251" fill="#29242f" font-size="21">用图帮我比较这两个方案。</text>
+    <rect x="60" y="288" width="660" height="276" rx="26" fill="#2b2931"/>
+    <text x="88" y="328" fill="#e4d9f6" font-size="18" font-weight="600">先看差别，再决定怎么选</text>
+    <text x="88" y="369" fill="#f5f3f8" font-size="22" font-weight="600">方案 A</text>
+    <text x="400" y="369" fill="#f5f3f8" font-size="22" font-weight="600">方案 B</text>
+    <text x="88" y="400" fill="#c7c1d0" font-size="18">轻量 · 上手快</text>
+    <text x="400" y="400" fill="#c7c1d0" font-size="18">灵活 · 可扩展</text>
+    <path d="M88 425H690" stroke="#49434f"/>
+    <text x="88" y="460" fill="#bfb7ca" font-size="17">示例成本</text>
+    <rect x="232" y="439" width="210" height="18" rx="9" fill="#c3adea"/>
+    <rect x="232" y="479" width="330" height="18" rx="9" fill="#ebbad2"/>
+    <text x="88" y="495" fill="#bfb7ca" font-size="17">示例能力</text>
+    <text x="88" y="540" fill="#c7c1d0" font-size="17">按你最在意的条件继续比较。</text>
+    <rect x="744" y="302" width="396" height="262" rx="26" fill="#2b2931"/>
+    <text x="772" y="343" fill="#e4d9f6" font-size="18" font-weight="600">动手试一下</text>
+    <text x="772" y="383" fill="#c7c1d0" font-size="18">数量</text>
+    <text x="1110" y="383" text-anchor="end" fill="#f5f3f8" font-size="20">4</text>
+    <rect x="772" y="411" width="338" height="8" rx="4" fill="#49434f"/>
+    <rect x="772" y="411" width="141" height="8" rx="4" fill="url(#accent)"/>
+    <circle cx="913" cy="415" r="12" fill="#eee0fb"/>
+    <text x="772" y="472" fill="#c7c1d0" font-size="18">演示总价</text>
+    <text x="772" y="526" fill="#f5f3f8" font-size="42" font-weight="650">48</text>
+    <text x="837" y="526" fill="#bfb7ca" font-size="18">= 4 × 12</text>
+    <text x="60" y="607" fill="#aaa2b5" font-size="17">图解 / 对比 / 指标 / 流程 / 图表 / 交互</text>
+    <text x="1140" y="607" text-anchor="end" fill="#aaa2b5" font-size="17">原创排版示意</text>
+  </g>
+</svg>

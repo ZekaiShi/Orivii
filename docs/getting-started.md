@@ -8,7 +8,7 @@
 
 命令行安装需要 Node.js **24.2.0 或更高的兼容版本**，以及兼容的 DSH **0.2.1** 系列。未安装 DSH 时，先按 [DSH 官方说明](https://github.com/deepseek-ai/deepseek-harness) 完成安装和模型配置。
 
-1.0.2 已发布到 npm。优先使用下方 npm 包名安装，也可选择 GitHub Release 地址或离线安装包。
+1.1.0 已发布到 npm。优先使用下方 npm 包名安装，也可选择 GitHub Release 地址或离线安装包。
 
 ## 1. 选择你的安装方式
 
@@ -19,7 +19,7 @@
 打开应用内的插件管理，添加以下 npm 包：
 
 ```text
-dsh-orivii@1.0.2
+dsh-orivii@1.1.0
 ```
 
 按宿主提示完成安装并重新启动。Desktop 与 Web 使用各自的插件配置；在 Web 中安装，不代表 Desktop 也已安装。
@@ -31,7 +31,7 @@ dsh-orivii@1.0.2
 ```powershell
 node --version
 dsh.cmd --version
-dsh.cmd plugin --profile web add dsh-orivii@1.0.2
+dsh.cmd plugin --profile web add dsh-orivii@1.1.0
 ```
 
 如果提示找不到 `dsh.cmd`，先确认 DSH 已安装、命令所在目录在 PATH 中，再重新打开 PowerShell。仅安装了 Desktop 的用户可使用上面的应用内入口。
@@ -43,7 +43,7 @@ dsh.cmd plugin --profile web add dsh-orivii@1.0.2
 ```sh
 node --version
 dsh --version
-dsh plugin --profile web add dsh-orivii@1.0.2
+dsh plugin --profile web add dsh-orivii@1.1.0
 ```
 
 在 DSH 后端所在的环境执行。例如 DSH 运行在 Linux 服务器上，就在该服务器安装；浏览器本身不负责安装插件。
@@ -60,20 +60,20 @@ dsh plugin --profile web add dsh-orivii@1.0.2
 Web 安装 Release 地址：
 
 ```sh
-dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.0.2/dsh-orivii-1.0.2.tgz
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
 ```
 
 Windows PowerShell 将命令开头的 `dsh` 改为 `dsh.cmd` 即可。
 
-也可以在 [v1.0.2 Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.0.2) 下载 `dsh-orivii-1.0.2.tgz`，然后从保存文件的目录安装：
+也可以在 [v1.1.0 Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.1.0) 下载 `dsh-orivii-1.1.0.tgz`，然后从保存文件的目录安装：
 
 ```powershell
-dsh.cmd plugin --profile web add .\dsh-orivii-1.0.2.tgz
+dsh.cmd plugin --profile web add .\dsh-orivii-1.1.0.tgz
 ```
 
 Desktop 可在插件管理中添加完整 Release 地址或选择下载的安装包。
 
-本次 Release 附件为 `dsh-orivii-1.0.2.tgz`，来自 **ZekaiShi/Orivii**。npm 包必须使用 **`dsh-orivii`**，npm 上同名的 `dsh-companion` 属于另一个项目。
+本次 Release 附件为 `dsh-orivii-1.1.0.tgz`，来自 **ZekaiShi/Orivii**。npm 包必须使用 **`dsh-orivii`**，npm 上同名的 `dsh-companion` 属于另一个项目。
 
 </details>
 

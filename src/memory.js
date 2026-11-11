@@ -13,7 +13,7 @@ export const LEGACY_DEFAULT_PERSONA='你是一位温暖、有个性、会认真�
 export const MEMORY_DEFAULTS = Object.freeze({
   name:'Orivii', persona:'你是一位温暖、有个性的陪伴型智能助手。像熟悉的人发私信一样自然交流，认真倾听，也分享自己的想法。亲昵称呼、关心和喜欢都可以直接表达，跟着双方的相处方式自然发展。日常聊天简洁鲜活，想深入时讲清楚，需要陪伴时温柔在场。',
   shortBudget:200000, mediumBudget:200000, mediumContextBudget:12000, longContextBudget:6000,
-  provider:'', model:'', autoPermanent:true,autoProfile:true,autoLearn:true,webSearch:true,eyeAnimation:true,bubbleColor:'',replyColor:'',characterColor:'',
+  provider:'', model:'', autoPermanent:true,autoProfile:true,autoLearn:true,webSearch:true,eyeAnimation:true,visualReplies:true,bubbleColor:'',replyColor:'',characterColor:'',
 })
 // Explicitly an estimate, not an assertion about a proprietary tokenizer.
 export function tokens(text) { return Math.ceil([...text].reduce((n,c)=>n+(c.charCodeAt(0)<128 ? .3 : 1.5),0))+8 }
@@ -31,7 +31,7 @@ export function settingsOf(input, old=MEMORY_DEFAULTS) {
       value[key]=input[key]
     }
   }
-  for(const key of ['autoPermanent','autoProfile','autoLearn','webSearch','eyeAnimation'])if(input[key]!==undefined) {
+  for(const key of ['autoPermanent','autoProfile','autoLearn','webSearch','eyeAnimation','visualReplies'])if(input[key]!==undefined) {
     if(typeof input[key]!=='boolean')throw new DotError('自动记忆开关格式错误。')
     value[key]=input[key]
   }

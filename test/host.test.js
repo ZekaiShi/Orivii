@@ -35,21 +35,23 @@ async function fixture(t,services=mockServices()){
 }
 async function settle(host){await Promise.all([...host.engine.jobs.values()].map(j=>j.promise))}
 
-test('six successful tool rounds reserve an answer-only call with existing evidence, not a misleading clarification error',async t=>{
+test('six successful query rounds retain evidence and allow an artifact delivery before the terminal reply',async t=>{
   let rounds=0,lookups=0
   const services=mockServices(options=>{
     if(options.purpose)return [{type:'text',text:'{"summary":"演示查询","overview":"演示查询"}'}]
     if(++rounds<=6)return [{type:'tool-call',id:'search'+rounds,name:'web_search',arguments:JSON.stringify({query:'公开测试资料 '+rounds})}]
-    assert.deepEqual(options.tools.map(t=>t.name),['finish_reply'])
-    assert.match(options.system,/本轮资料收集已结束/)
-    assert.equal(options.messages.filter(m=>m.role==='tool').length,6)
+    assert.deepEqual(options.tools.map(t=>t.name),['finish_reply','list_chat_files','send_chat_image','read_chat_file','present_visual'])
+    assert.match(options.system,/资料已经收集完毕/)
+    assert.equal(options.messages.filter(m=>m.role==='tool').length,rounds===7?6:7)
+    if(rounds===7)return [{type:'tool-call',id:'visual',name:'present_visual',arguments:JSON.stringify({spec:{version:1,title:'核对结果',blocks:[{type:'table',columns:['资料','状态'],rows:[['合成来源','已核对']]}]}})}]
     return [{type:'tool-call',id:'final',name:'finish_reply',arguments:JSON.stringify({text:'已核对公开资料；暂未证实的部分我会明确区分。',expression:'neutral'})}]
   })
   services.web={search:async()=>{lookups++;return {sources:[{url:'https://example.org/source',title:'真实测试来源',snippet:'仅为合成测试'}]}}}
   const {host,call}=await fixture(t,services),chat=await call('createChat')
   await call('send',{chatId:chat.id,text:'帮我核对公开资料',requestId:randomUUID()});await settle(host)
   const s=await call('snapshot',{chatId:chat.id})
-  assert.equal(rounds,7);assert.equal(lookups,6);assert.equal(s.jobs.at(-1).status,'done')
+  assert.equal(rounds,8);assert.equal(lookups,6);assert.equal(s.jobs.at(-1).status,'done')
+  assert.equal(s.messages.filter(message=>message.attachments?.length).length,1)
   assert.match(s.messages.at(-1).text,/已核对/);assert.doesNotMatch(JSON.stringify(s),/internalSteps|本轮资料收集已结束|更具体一些/)
 })
 
@@ -60,7 +62,7 @@ test('duplicate searches stop repeated IO and answer-only mode cannot execute a 
       if(options.purpose)return [{type:'text',text:'{"summary":"演示","overview":"演示"}'}]
       rounds++
       if(rounds<=2)return [{type:'tool-call',id:'read'+rounds,name:'web_search',arguments:'{"query":"same query"}'}]
-      assert.deepEqual(options.tools.map(t=>t.name),['finish_reply'])
+      assert.deepEqual(options.tools.map(t=>t.name),['finish_reply','list_chat_files','send_chat_image','read_chat_file','present_visual'])
       return obeys?[{type:'text',text:'[dot-reply:neutral]\n根据已有来源，信息还不足以确认。'}]:[{type:'tool-call',id:'rogue',name:'web_search',arguments:'{"query":"must not run"}'}]
     })
     services.web={search:async()=>{lookups++;return {sources:[]}}}
@@ -70,6 +72,17 @@ test('duplicate searches stop repeated IO and answer-only mode cannot execute a 
     assert.equal(s.jobs.at(-1).status,obeys?'done':'failed')
     assert.doesNotMatch(JSON.stringify(s),/must not run|更具体一些|相同查询已执行/)
   }
+})
+
+test('repeated invalid image sources do not repeat filesystem IO or end in a generic unfinished reply',async t=>{
+  let calls=0
+  const services=mockServices(options=>options.purpose?[{type:'text',text:'{}'}]:[{type:'tool-call',id:randomUUID(),name:'send_chat_image',arguments:'{"path":"missing.png"}'}])
+  const {host,call}=await fixture(t,services),chat=await call('createChat'),outgoing=host.engine.files.outgoingImage.bind(host.engine.files)
+  t.mock.method(host.engine.files,'outgoingImage',async(...args)=>{calls++;return outgoing(...args)})
+  await call('send',{chatId:chat.id,text:'把图片给我',requestId:randomUUID()});await settle(host)
+  const snapshot=await call('snapshot',{chatId:chat.id})
+  assert.equal(calls,1);assert.equal(snapshot.jobs.at(-1).status,'done');assert.match(snapshot.messages.at(-1).text,/图片|来源/)
+  assert.doesNotMatch(JSON.stringify(snapshot.messages),/这次没能整理出完整答复|可以直接重试|stack|send_chat_image/)
 })
 
 test('multiple useful acknowledgements carry distinct ordered expressions around real tools without extra emotion calls',async t=>{

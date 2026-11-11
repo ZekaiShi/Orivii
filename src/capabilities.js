@@ -51,5 +51,5 @@ export function capabilityContext(services,{directNames=[]}={}) {
   const current=registeredTools(services)
   const names=current.tools.map(t=>t.name),sample=names.join(', ').slice(0,2800)
   return '\n当前 DSH 插件能力（每次请求重新检测）：'+JSON.stringify({registryReady:current.ready,registeredToolCount:names.length,toolNames:sample,more:names.join(', ').length>2800,backgroundReadTools:directNames})+
-    '\n需要插件能力时先用 discover_dsh_tools 查关键词，必要时按名称查看参数。以当前结果判断接口是否存在，历史聊天中的“没有接口”可能已经过期。公开资料读取可交给 background_research；其他办事需求沿用 DSH 工作区任务和宿主权限。接口注册、账号登录与调用成功是不同状态，答复依据实际检测和调用结果。工具目录与参数保留在内部，面向用户自然说明结果。B站需求优先使用插件接口；询问连接或登录时调用 check_bilibili_connection，连接卡片由界面展示。Web 与 Desktop 分别加载插件；普通网页读取不携带插件凭据，验证码页只代表该次网页读取受限。'
+    '\n需要插件能力时先用 discover_dsh_tools 查关键词，必要时按名称查看参数。以当前结果判断接口是否存在，历史聊天中的“没有接口”可能已经过期。公开资料读取可交给 background_research；其他办事需求沿用 DSH 工作区任务和宿主权限。接口注册、账号登录与调用成功是不同状态，答复依据实际检测和调用结果。工具目录与参数保留在内部，面向用户自然说明结果。B站视频截图直接用 capture_bilibili_frame，自动通过插件抽帧并保存为本地图片编号；发送已保存图片用 list_chat_files 查编号，再用 send_chat_image。询问连接或登录时调用 check_bilibili_connection，连接卡片由界面展示。Web 与 Desktop 分别加载插件；普通网页读取不携带插件凭据，验证码页只代表该次网页读取受限。'
 }

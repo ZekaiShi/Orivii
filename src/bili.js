@@ -16,7 +16,13 @@ export function availableBiliTools(services,{companionActive=false}={}){
     parameters.additionalProperties=false;parameters.required=[...new Set([...(parameters.required||[]),'command'])].filter(k=>k!=='out')
     watchTools=[{...watch,parameters}]
   }
-  return [...(has(services,'bili_watch')||has(services,'bili_subtitle')?biliTools:[]),...watchTools,...registered.filter(t=>READ_NAMES.has(t.name))]
+  return [...(has(services,'bili_watch')||has(services,'bili_subtitle')?biliTools:[]),...(has(services,'bili_watch')?[biliImageTool]:[]),...watchTools,...registered.filter(t=>READ_NAMES.has(t.name))]
+}
+const biliImageTool={name:'read_bilibili_images',description:'取得 B站视频画面并存入本地库，最多四张。先复用本地图片；默认快速预览，mode=frames 或指定 step/indices 时使用原视频抽帧。preview 使用插件的五帧预览通道，位置可能是估计值；核对细字时选择 frames。返回可查看和发送的图片 id。',parameters:{type:'object',properties:{bv:{type:'string'},p:{type:'integer',minimum:1},mode:{type:'string',enum:['preview','frames']},step:{type:'number',minimum:1},indices:{type:'array',items:{type:'integer',minimum:1},maxItems:4,minItems:1}},required:['bv'],additionalProperties:false}}
+export const biliCaptureTool={...biliImageTool,name:'capture_bilibili_frame',description:'快速截取并交付 B站画面：先复用本地图片；无缓存时默认走插件预览，mode=frames 或指定 step/indices 时抽取原视频。普通截图取到就自动发送，省去看图和确认发送的模型请求。用户需要解读画面时设置 analyze=true，由你看图后回答。返回 accepted 后自然回应并结束本次前台短回复。',parameters:{...biliImageTool.parameters,properties:{...biliImageTool.parameters.properties,analyze:{type:'boolean'}}}}
+export function biliFrameRequest(args){
+  if(!args||Object.keys(args).some(key=>!['bv','p','mode','step','indices','analyze'].includes(key))||!/^BV[0-9A-Za-z]{10}$/.test(args.bv)||args.p!==undefined&&(!Number.isSafeInteger(args.p)||args.p<1||args.p>10000)||args.mode!==undefined&&!['preview','frames'].includes(args.mode)||args.mode==='preview'&&args.step!==undefined||args.analyze!==undefined&&typeof args.analyze!=='boolean'||args.step!==undefined&&(!Number.isFinite(args.step)||args.step<1)||args.indices&&(!Array.isArray(args.indices)||!args.indices.length||args.indices.length>4||args.indices.some(i=>!Number.isSafeInteger(i)||i<1)))throw new DotError('视频抽帧参数无效。')
+  return {bv:args.bv,...(args.p!==undefined?{p:args.p}:{}),...(args.mode?{mode:args.mode}:{}),...(args.analyze!==undefined?{analyze:args.analyze}:{}),...(args.step!==undefined?{step:args.step}:{}),...(args.indices?{indices:[...new Set(args.indices)]}:{})}
 }
 export function biliConnection(services){
   const names=availableBiliTools(services).map(t=>t.name)
@@ -81,15 +87,28 @@ export async function readBili(services,args,signal,{companionActive=false}={}){
   return {url:`https://www.bilibili.com/video/${bv}/?p=${p}`,content:String(text).slice(0,12000),truncated:String(text).length>12000||/只回了前 \d+ 字/.test(text),untrusted:true}
 }
 
-export async function executeBiliTool(services,name,args,signal,{companionActive=false}={}){
+export async function executeBiliTool(services,name,args,signal,{companionActive=false,captureImages,cacheImages}={}){
   if(companionActive)throw new DotError('正在陪看，请使用当前画面观察接口。')
-  if(!(READ_NAMES.has(name)||name==='bili_watch')||!availableBiliTools(services).some(t=>t.name===name))throw new DotError('该 B站读取接口当前不可用，请重新检测。')
+  if(name==='read_bilibili_images'){
+    if(!captureImages||!has(services,'bili_watch'))throw new DotError('当前视频图片交付通道未就绪。','bili_images')
+    args=biliFrameRequest(args)
+    const start=Date.now(),cached=cacheImages?await cacheImages(args,signal):null,cacheLookupMs=Date.now()-start,url='https://www.bilibili.com/video/'+args.bv+'/?p='+(args.p??1)
+    if(cached?.images?.length)return {...cached,tool:name,url,content:JSON.stringify(cached),untrusted:true,retrievedAt:Date.now(),timings:{cacheLookupMs,pluginMs:0,imageImportMs:0}}
+    const mode=args.mode||(args.step!==undefined||args.indices?'frames':'preview')
+    const result=await executeBiliTool(services,'bili_watch',{command:mode==='preview'?'peek':'frames',bv:args.bv,...(args.p?{p:args.p}:{}),...(args.step?{step:args.step}:{})},signal,{companionActive,captureImages:(result,request)=>captureImages(result,request,{indices:args.indices})})
+    return {...result,timings:{cacheLookupMs,...result.timings}}
+  }
+  if(!(READ_NAMES.has(name)||name==='bili_watch')||!(name==='bili_watch'?has(services,name):availableBiliTools(services).some(t=>t.name===name)))throw new DotError('该 B站读取接口当前不可用，请重新检测。')
   if(name==='bili_watch'&&(!WATCH_COMMANDS.has(args?.command)||args.out!==undefined))throw new DotError('只允许使用 B站内容读取操作。')
   if(name==='bili_watch')args=args.command==='text'?{...args,format:'md',head:6000,full:false}:{...args,full:true}
   const slow=name==='bili_watch'&&['asr','text','ocr','frames','sheet','substrip','peek'].includes(args.command)
-  const result=await services.tools.execute({callId:randomUUID(),name,arguments:args,...(services.toolScope?{agent:services.toolScope}:{}),signal:AbortSignal.any([signal||new AbortController().signal,AbortSignal.timeout(slow?900000:90000)])})
+  const started=Date.now(),result=await services.tools.execute({callId:randomUUID(),name,arguments:args,...(services.toolScope?{agent:services.toolScope}:{}),signal:AbortSignal.any([signal||new AbortController().signal,AbortSignal.timeout(slow?900000:90000)])}),pluginMs=Date.now()-started
   if(result?.isError||result?.value?.ok===false)throw new DotError('B站接口读取失败，请检查原插件的登录、依赖和网络状态。','bili_read')
-  const content=result?.value?.text||(result?.content||[]).filter(b=>b?.type==='text').map(b=>b.text).join('\n')||JSON.stringify(result?.value??{})
+  let content=result?.value?.text||(result?.content||[]).filter(b=>b?.type==='text').map(b=>b.text).join('\n')||JSON.stringify(result?.value??{}),captured,imageImportMs=0
+  if(captureImages&&name==='bili_watch'&&['frames','peek'].includes(args.command)){
+    const importStarted=Date.now();captured=await captureImages(result,args);imageImportMs=Date.now()-importStarted
+    content=JSON.stringify({frameCount:captured.frameCount,images:captured.images,note:captured.images.length?'真实画面已保存为图片附件，可由主代理查看并用 send_chat_image 发送。':'本次尚未取得可发送的画面附件。'})
+  }
   if(/^（全文 \d+ 字，超限，JSON 已整体落盘/.test(content))throw new DotError('插件这次仅返回缓存路径，尚未拿到材料正文。','bili_read')
-  return {tool:name,content:content.slice(0,12000),truncated:content.length>12000||/只回了前 \d+ 字/.test(content),untrusted:true,...(/^BV[\dA-Za-z]{10}$/.test(args?.bvid||args?.bv||'')?{url:`https://www.bilibili.com/video/${args.bvid||args.bv}/`}:{}),retrievedAt:Date.now()}
+  return {...(captured?{images:captured.images,frameCount:captured.frameCount}:{}),tool:name,content:content.slice(0,12000),truncated:content.length>12000||/只回了前 \d+ 字/.test(content),untrusted:true,...(/^BV[\dA-Za-z]{10}$/.test(args?.bvid||args?.bv||'')?{url:`https://www.bilibili.com/video/${args.bvid||args.bv}/`}:{}),retrievedAt:Date.now(),timings:{pluginMs,imageImportMs}}
 }

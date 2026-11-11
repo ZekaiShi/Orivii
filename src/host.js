@@ -8,6 +8,8 @@ import {Vault,DotError,atomicWrite,validId} from './vault.js'
 import {DotEngine} from './engine.js'
 import {MEMORY_DEFAULTS,LEGACY_DEFAULT_PERSONA,settingsOf,memoryStats,appendBubble,rebalance,searchArchive,refOf} from './memory.js'
 import {profileOf,editProfile} from './profile.js'
+import {filePreview,sanitizeMarkup} from './preview.js'
+import {validateVisualSpec} from './visual.js'
 import {createDotRemote} from './protocol.js'
 import {searchWeb} from './web.js'
 import {loadExtension} from './extension.js'
@@ -145,7 +147,7 @@ export class DotHost {
   }
   async dispatch(r) {
     switch(r.action) {
-      case 'modelProbe':return this.engine.probeModel(AbortSignal.any([this.liveController.signal,AbortSignal.timeout(55000)]),{roundtrip:r.roundtrip===true,videoId:r.videoId})
+      case 'modelProbe':return this.engine.probeModel(AbortSignal.any([this.liveController.signal,AbortSignal.timeout(r.videoImages?180000:55000)]),{roundtrip:r.roundtrip===true,videoId:r.videoId,videoImages:r.videoImages===true,videoCache:r.videoCache!==false,videoAnalyze:r.videoAnalyze!==false})
       case 'biliConnection':return checkBiliConnection(this.services,{signal:this.liveController.signal,verify:(await this.vault.read()).catalog.settings.webSearch!==false})
       case 'progress':return this.engine.progress(validId(r.chatId))
       case 'snapshot':return this.snapshot(r)
@@ -204,6 +206,8 @@ export class DotHost {
       case 'fileDiscard':return this.engine.files.discard(r.id)
       case 'fileFinish':{const result=await this.engine.files.finish(r.id,r.token);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
       case 'fileRead':{const result=await this.engine.files.read(r);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
+      case 'filePreview':{const result=await filePreview(this.engine.files,r.id);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
+      case 'markupPreview':return r.format==='visual'?{kind:'visual',spec:validateVisualSpec(JSON.parse(r.source))}:{kind:r.format,html:sanitizeMarkup(r.source)}
       case 'send':return this.engine.start(validId(r.chatId),r.text,r.requestId,{attachments:r.attachments||[]})
       case 'cancel':await this.engine.cancel();return {cancelled:true}
       case 'search':return (await searchArchive(this.vault,await this.vault.read(),r.query)).map(hit=>hit.role==='assistant'?{...hit,excerpt:responseText(this.vault,hit.excerpt)}:hit)

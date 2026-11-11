@@ -9,7 +9,7 @@ export function createDotRemote(z) {
     shortBudget:z.number().int().min(100000).max(200000).optional(),
     mediumBudget:z.number().int().min(10000).max(200000).optional(),
     mediumContextBudget:z.number().int().min(0).max(200000).optional(),
-    longContextBudget:z.number().int().min(0).max(30000).optional(),autoPermanent:z.boolean().optional(),autoProfile:z.boolean().optional(),autoLearn:z.boolean().optional(),webSearch:z.boolean().optional(),eyeAnimation:z.boolean().optional(),
+    longContextBudget:z.number().int().min(0).max(30000).optional(),autoPermanent:z.boolean().optional(),autoProfile:z.boolean().optional(),autoLearn:z.boolean().optional(),webSearch:z.boolean().optional(),eyeAnimation:z.boolean().optional(),visualReplies:z.boolean().optional(),
   })
   const id=z.string().regex(/^[a-f0-9-]{36}$/)
   const sessionMode=z.enum(['run','8h','24h'])
@@ -20,7 +20,7 @@ export function createDotRemote(z) {
     operation('webCheck'),
     operation('capabilities',{query:z.strictObject({query:z.string().max(200).optional(),names:z.array(z.string().max(200)).max(5).optional(),offset:z.number().int().nonnegative().optional(),limit:z.number().int().min(1).max(30).optional()}).optional()}),
     operation('biliConnection'),
-    operation('modelProbe',{roundtrip:z.boolean().optional(),videoId:z.string().regex(/^BV[0-9A-Za-z]{10}$/).optional()}),
+    operation('modelProbe',{roundtrip:z.boolean().optional(),videoId:z.string().regex(/^BV[0-9A-Za-z]{10}$/).optional(),videoImages:z.boolean().optional(),videoCache:z.boolean().optional(),videoAnalyze:z.boolean().optional()}),
     operation('resume',{identityId:id.optional()}),operation('identities'),
     operation('sessionPolicy',{mode:sessionMode}),
     operation('identitySwitch',{identityId:id,password:z.string().max(1024).optional()}),
@@ -32,6 +32,8 @@ export function createDotRemote(z) {
     operation('fileChunk',{id,offset:z.number().int().nonnegative(),data:z.string().max(131072)}),
     ...['fileFinish','fileCancel','fileDiscard'].map(action=>operation(action,{id})),
     operation('fileRead',{id,offset:z.number().int().nonnegative().optional()}),
+    operation('filePreview',{id}),
+    operation('markupPreview',{format:z.enum(['html','svg','visual']),source:z.string().min(1).max(100000)}),
     operation('extension',{request:z.record(z.string(),z.unknown())}),
     operation('setup',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional(),settings:settings.optional(),profile:profile.optional(),plaintext:z.boolean().optional(),plaintextAcknowledgement:z.string().max(100).optional(),sessionMode:sessionMode.optional()}),
     operation('unlock',{workspace:z.string().max(4096).optional(),password:z.string().max(1024).optional(),sessionMode:sessionMode.optional()}),

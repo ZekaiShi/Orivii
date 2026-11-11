@@ -1,5 +1,6 @@
 import {dotExpression,cleanReply} from './expression.js'
 import {createReplyInk} from './ink.js'
+import {filePreviewKind} from './visual.js'
 
 // Only an explicit, first-line visible-reply header opts into live delivery.
 // Unmarked tool narration and all reasoning continue to stay private.
@@ -20,14 +21,33 @@ export function bubbleParts(text) {
 // Keep archived messages intact; give every attached image its own display
 // bubble even when a model sends its caption and files in the same message.
 export function messageBubbleParts(message) {
-  const parts=(message.text.trim()?(message.role==='assistant'?bubbleParts(message.text):[message.text]):[]).map((text,i)=>({key:'text:'+i,kind:'text',text}))
-  const files=(message.attachments||[]).filter(file=>file.kind!=='image')
+  const parts=[],body=message.presentation?.artifactOnly?'':message.text
+  const addText=(text,offset)=>{if(text.trim())for(const [i,part]of (message.role==='assistant'?bubbleParts(text):[text]).entries())parts.push({key:'text:'+offset+':'+i,kind:'text',text:part})}
+  let at=0,last=0
+  if(message.role==='assistant'){
+    const lines=body.match(/[^\n]*\n|[^\n]+$/g)||[]
+    for(let i=0;i<lines.length;i++){
+      const open=lines[i].match(/^ {0,3}(`{3,}|~{3,})([^\r\n]*)\r?\n?$/)
+      if(!open){at+=lines[i].length;continue}
+      const start=at,language=open[2].trim().toLowerCase(),contentAt=at+lines[i].length;let end=i+1,position=contentAt
+      for(;end<lines.length;end++){if(new RegExp('^ {0,3}'+open[1][0]+'{'+open[1].length+',}\\s*$').test(lines[end].trimEnd()))break;position+=lines[end].length}
+      if(['html','svg','orivii-visual'].includes(language)){
+        addText(body.slice(last,start),last)
+        const complete=end<lines.length
+        parts.push({key:'markup:'+start,kind:complete||!message.live?'markup':'markup-pending',format:language==='orivii-visual'?'visual':language,source:body.slice(contentAt,position),text:''})
+        last=complete?position+lines[end].length:body.length
+      }
+      at=end<lines.length?position+lines[end].length:body.length;i=end
+    }
+  }
+  addText(body.slice(last),last)
+  const files=(message.attachments||[]).filter(file=>file.kind!=='image'&&!filePreviewKind(file))
   if(files.length){
     if(!parts.length)parts.push({key:'files',kind:'files',text:''})
     parts.at(-1).attachments=files
   }
   if(!parts.length&&(message.connection||message.webSources?.length))parts.push({key:'text:0',kind:'text',text:''})
-  for(const file of message.attachments||[])if(file.kind==='image')parts.push({key:'image:'+file.id,kind:'image',text:'',attachments:[file]})
+  for(const file of message.attachments||[])if(file.kind==='image')parts.push({key:'image:'+file.id,kind:'image',text:'',attachments:[file]});else if(filePreviewKind(file))parts.push({key:'artifact:'+file.id,kind:'artifact',text:'',file})
   return parts
 }
 
