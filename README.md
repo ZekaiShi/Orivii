@@ -38,17 +38,17 @@
 
 ## 快速开始
 
-1.1.0 已提供 GitHub Release 安装包；npm 1.1.0 尚待发布验证。当前使用下方 Release 地址安装。
+**1.1.0 已发布到 npm 和 GitHub Release。**
 
 **已在使用 DSH？** 安装插件、选一个资料目录，就可以开始。模型沿用你在 DSH 中配置的服务。
 
 1. **安装。** Web 用户在运行 DSH 的电脑上执行：
 
    ```powershell
-   dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
+   dsh.cmd plugin --profile web add dsh-orivii@1.1.0
    ```
 
-   Linux / macOS 将 `dsh.cmd` 改为 `dsh`。Desktop 用户在应用内插件管理中添加同一 Release 地址，或选择下载的安装包，按提示加载新版。
+   Linux / macOS 将 `dsh.cmd` 改为 `dsh`。Desktop 用户在应用内插件管理中添加 **`dsh-orivii@1.1.0`**，按提示加载新版。
 2. **打开。** 点击左侧 **Orivii**，选择工作空间，设置名字与解锁密码。
 3. **认识一下。** 发一句「叫我小林就好，平时说话简短一点」，开始你们的第一段对话。
 

@@ -46,7 +46,7 @@
 
 1. 完成上面的资料备份。
 2. 在 DSH 插件管理中停用旧 Orivii，避免两份同时启用。
-3. 从 [1.1.0 Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.1.0) 安装，按提示重启。
+3. 安装 **`dsh-orivii@1.1.0`**，按提示重启。
 4. 选择原来的工作空间并解锁，核对聊天和角色是否完整。
 
 旧 Release 的安装包文件名含 `dsh-companion`，不代表应该在 npm 上安装同名包。Orivii 的 npm 名字始终以本项目主页说明为准，目前是 **`dsh-orivii`**。
