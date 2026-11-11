@@ -52,7 +52,7 @@ dsh plugin --profile web add dsh-orivii@1.1.0
 
 市场目录已收录 **Orivii**，分类为 **AGI 探索**。在支持市场的 DSH 插件管理中搜索 `Orivii`，核对仓库是 **ZekaiShi/Orivii** 后安装。
 
-不同市场客户端的同步时间可能不同。暂时搜不到时，使用上面的 npm 方式或下方 Release 地址安装即可。[查看收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
+截至 2026-11-12，市场条目的安装包地址仍固定为 **1.0.2**。要使用 **1.1.0**，请使用上面的指定版本包名或下方 Release 地址安装。[查看当前收录记录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/ZekaiShi__Orivii.yml)。
 
 <details>
 <summary><strong>备选：GitHub Release 地址或本地安装包</strong></summary>
