@@ -21,15 +21,15 @@
 
 ## Get started
 
-Install version 1.1.0 from npm or the matching GitHub Release.
+Version 1.1.0 is available through GitHub Release. Its npm publication is awaiting verification; use the Release URL below for now.
 
 With a working DSH installation and a configured model, install the prebuilt plugin:
 
 ```sh
-dsh plugin --profile web add dsh-orivii@1.1.0
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
 ```
 
-On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add **`dsh-orivii@1.1.0`** through the app's plugin manager. Follow the host's reload instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
+On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add the same Release URL or select the downloaded package through the app's plugin manager. Follow the host's reload instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
 
 Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm package is **`dsh-orivii`**; the npm package named `dsh-companion` is a different project. [Full installation guide](docs/getting-started.md)
 

@@ -8,7 +8,7 @@
 
 命令行安装需要 Node.js **24.2.0 或更高的兼容版本**，以及兼容的 DSH **0.2.1** 系列。未安装 DSH 时，先按 [DSH 官方说明](https://github.com/deepseek-ai/deepseek-harness) 完成安装和模型配置。
 
-1.1.0 已发布到 npm。优先使用下方 npm 包名安装，也可选择 GitHub Release 地址或离线安装包。
+1.1.0 已提供 GitHub Release 安装包，npm 版本尚待发布验证。当前使用下方 Release 地址或离线安装包。
 
 ## 1. 选择你的安装方式
 
@@ -16,10 +16,10 @@
 
 ### DSH Desktop
 
-打开应用内的插件管理，添加以下 npm 包：
+打开应用内的插件管理，添加以下插件包地址：
 
 ```text
-dsh-orivii@1.1.0
+https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
 ```
 
 按宿主提示完成安装并重新启动。Desktop 与 Web 使用各自的插件配置；在 Web 中安装，不代表 Desktop 也已安装。
@@ -31,7 +31,7 @@ dsh-orivii@1.1.0
 ```powershell
 node --version
 dsh.cmd --version
-dsh.cmd plugin --profile web add dsh-orivii@1.1.0
+dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
 ```
 
 如果提示找不到 `dsh.cmd`，先确认 DSH 已安装、命令所在目录在 PATH 中，再重新打开 PowerShell。仅安装了 Desktop 的用户可使用上面的应用内入口。
@@ -43,12 +43,12 @@ dsh.cmd plugin --profile web add dsh-orivii@1.1.0
 ```sh
 node --version
 dsh --version
-dsh plugin --profile web add dsh-orivii@1.1.0
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.1.0/dsh-orivii-1.1.0.tgz
 ```
 
 在 DSH 后端所在的环境执行。例如 DSH 运行在 Linux 服务器上，就在该服务器安装；浏览器本身不负责安装插件。
 
-### 从 DSH Market 安装
+### 从 DSH Market 安装（当前条目为 1.0.2）
 
 市场目录已收录 **Orivii**，分类为 **AGI 探索**。在支持市场的 DSH 插件管理中搜索 `Orivii`，核对仓库是 **ZekaiShi/Orivii** 后安装。
 
