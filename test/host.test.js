@@ -429,7 +429,7 @@ test('web search acknowledges before network, follows sources and keeps tool out
     fetch:async()=>({url:'https://example.org/gpu',statusCode:200,body:{kind:'text',content:'测试报价'}})}
   const {host,call}=await fixture(t,services),chat=await call('createChat',{})
   try {
-    await call('send',{chatId:chat.id,text:'帮我查显卡价格',requestId:randomUUID()})
+    await call('send',{chatId:chat.id,text:'帮我查一下刚才说的那款显卡的价格',requestId:randomUUID()})
     await searchStarted
     const during=await call('snapshot',{chatId:chat.id})
     assert.equal(during.messages.at(-1).text,'我帮你看看现在的价格。')

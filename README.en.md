@@ -6,30 +6,27 @@
 
 <p align="center"><a href="README.md">中文</a> · <a href="docs/README.md">User guide (Chinese)</a> · <a href="https://www.npmjs.com/package/dsh-orivii">npm</a> · <a href="https://github.com/ZekaiShi/Orivii/releases">Releases</a> · <a href="UPDATES.md">What's next</a></p>
 
-## 1.1.0 · Ideas, right in the conversation
+## 1.2.0 · A quick reply, then the facts
 
-- Six native layouts for explanations, comparisons, metrics, steps, charts, and interactive examples. Controls update locally; longer content continues in complete chat bubbles.
-- Everyday conversation and ordinary lookups default to natural text. Visual explanations use native components; explicit webpage and file requests can produce downloadable attachments.
-- Bilibili captures reuse the local image library across chats. New captures use the installed plugin's quick preview by default, with original-video extraction available for detail.
-- Images fit their bubbles, downloads sit in the lower-right corner, and HTML/SVG previews share the chat surface with readable text in light and dark themes.
+Ask Orivii to look up the latest Node.js LTS version. When the public topic is clear, it acknowledges your request, checks sources through DSH in the background, and sends a separate answer. You can keep chatting while it looks.
 
-![Original layout illustration with fictional data](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/visual-bubbles.svg)
+- Readable pages and search snippets are treated as different kinds of evidence. Orivii says what remains unconfirmed when sources are missing. This flow requires a working DSH web service.
+- Web conversations use the browser's time zone. Messages retain their send times, and expressions play in order across the initial reply and the follow-up.
+- With the relevant settings enabled, Orivii can revisit unresolved public questions during idle time and return to the original chat if it finds a useful new lead.
 
-*Original layout illustration with demo data, not a screenshot of a real conversation.*
-
-[1.1.0 notes and upgrade guide](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/1.1.0.md) · [Visual replies guide](https://github.com/ZekaiShi/Orivii/blob/main/docs/visuals.md) · [Update index](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/README.md)
+[1.2.0 notes and upgrade guide](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/1.2.0.md) · [Update index](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/README.md)
 
 ## Get started
 
-Install version 1.1.0 from npm or the matching GitHub Release.
+Get the matching [1.2.0 package](https://github.com/ZekaiShi/Orivii/releases/tag/v1.2.0) from GitHub Releases.
 
 With a working DSH installation and a configured model, install the prebuilt plugin:
 
 ```sh
-dsh plugin --profile web add dsh-orivii@1.1.0
+dsh plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.2.0/dsh-orivii-1.2.0.tgz
 ```
 
-On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add **`dsh-orivii@1.1.0`** through the app's plugin manager. Follow the host's reload instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
+On Windows PowerShell, use `dsh.cmd` in place of `dsh`. Desktop users can add the same [package URL](https://github.com/ZekaiShi/Orivii/releases/download/v1.2.0/dsh-orivii-1.2.0.tgz) through the app's plugin manager. Follow the host's reload instructions, open **Orivii** in the sidebar, choose a workspace, and set a name and password.
 
 Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm package is **`dsh-orivii`**; the npm package named `dsh-companion` is a different project. [Full installation guide](docs/getting-started.md)
 
@@ -53,11 +50,15 @@ Requires Node.js **≥24.2.0** and a compatible **DSH 0.2.1** host. The npm pack
 
 Reminders require the DSH host to remain running and the relevant identity to remain unlocked. They arrive in the chat, not as an alarm that works after shutdown.
 
-## Coming from 1.0.x
+## Upgrading an existing installation
 
 Images, files, independent identities, unlock intervals, reminders, and background work remain available. Back up your workspaces before upgrading, then reopen the existing directories.
 
 [Images, Bilibili, and appearance guide (Chinese)](docs/interaction-preview.md)
+
+Charts, comparisons, explanations, and interactive examples can appear directly in chat. [Visual replies guide](docs/visuals.md)
+
+![Original visual reply illustration with fictional data](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/visual-bubbles.svg)
 
 ## Make it yours
 
@@ -69,7 +70,7 @@ Try asking:
 >
 > Remind me to take a break in ten minutes.
 >
-> Check this project's latest official release and include the original link.
+> Look up the latest Node.js LTS version.
 
 ## Documentation
 
@@ -91,7 +92,7 @@ The detailed guides currently use Chinese and match the UI labels:
 
 Chat and memory files stay in your chosen workspace, with optional password encryption. **Local storage does not mean offline processing**: your configured model receives the context needed to answer; web services receive necessary queries. Keep your password safe—lost encryption passwords cannot be recovered.
 
-Voice calls are not included in 1.1.0. Co-watching, co-reading, and public-topic exploration are optional previews, off by default and dependent on host services. Office/PDF parsing and new messaging channels remain planned work. See the [roadmap](UPDATES.md) and [release notes](CHANGELOG.md).
+Co-watching, co-reading, and public-topic exploration are optional previews, off by default and dependent on host services. Voice calls, Office/PDF parsing, and new messaging channels remain planned work. See the [roadmap](UPDATES.md) and [release notes](CHANGELOG.md).
 
 Issues and focused PRs are welcome. Use fictional data for reproductions and never attach credentials or real memory archives. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Media credits](media/README.md)
 

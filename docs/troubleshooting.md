@@ -13,16 +13,16 @@
 | PowerShell 提示无法加载脚本 | 使用 `dsh.cmd` / `npm.cmd`，无需为安装插件修改系统执行策略 |
 | `Failed to load plugins` | 检查 Node / DSH 兼容版本、是否启用了两份 Orivii，以及完整安装后是否重启了后端 |
 | `wire field "request" failed boundary validation` 或 `without inject` | 可能是前端与后端插件版本不一致，或服务尚未启动；先重启 DSH 后端，再刷新页面，检查重复插件。仍失败时提交脱敏错误 |
-| Market 搜不到 | 搜索 `Orivii`、核对 AGI 探索分类；目录同步可能有延迟，可直接用 npm 安装 |
+| Market 搜不到 | 搜索 `Orivii`、核对 AGI 探索分类。目录同步期间可通过 GitHub Release 安装 |
 
 ### npm 的 E404 是什么意思？
 
 `npm view` 只是查询仓库，不会发布或安装。E404 表示该注册表没有返回你请求的包或版本，也可能是私有包权限问题。
 
-Orivii 的正式 npm 包是 **`dsh-orivii`**，1.1.0 已发布。Windows 可以用以下只读命令检查官方注册表：
+Orivii 的 npm 包名为 **`dsh-orivii`**。Windows 可以用以下只读命令查看官方注册表是否已收录 1.2.0：
 
 ```powershell
-npm.cmd view dsh-orivii@1.1.0 name version dist.tarball --registry=https://registry.npmjs.org/ --prefer-online
+npm.cmd view dsh-orivii@1.2.0 name version dist.tarball --registry=https://registry.npmjs.org/ --prefer-online
 ```
 
 若此命令返回正确版本，而默认命令失败，检查你正在使用的 npm 镜像：
@@ -31,7 +31,7 @@ npm.cmd view dsh-orivii@1.1.0 name version dist.tarball --registry=https://regis
 npm.cmd config get registry
 ```
 
-镜像可能未同步。可以先按 [快速入门](getting-started.md) 使用 GitHub Release 地址；不必清理全部 npm 缓存或重装整个环境。
+官方注册表还没有该版本，或镜像尚未同步时，可以使用 GitHub Release 地址。[快速入门](getting-started.md)
 
 ## 工作空间与解锁
 
@@ -61,12 +61,12 @@ npm.cmd config get registry
 | --- | --- |
 | DSH 能聊，Orivii 不回复 | 设置 → 连接与模型，核对模型并保存；从简单问候测试，记录界面错误 |
 | 回复慢 | 用短问题排除网络与供应商延迟；检查是否正在检索。长历史不会全部进入每次请求，但仍可能增加处理时间 |
+| 收到「好，我看看。」后一直没下文 | 核对 DSH 联网服务状态，再用对象明确的问题重试，例如「请查一下 Node.js 最新 LTS 版本」。仍无答复时，记录 Orivii 版本与脱敏后的错误 |
 | 说“无法联网” | 开启并保存“需要时联网查资料”；再确认 DSH 的搜索服务确实可用。模型名字本身不代表有搜索工具 |
 | 新聊天没接上刚才的话题 | 确认还是同一个角色；补充关键词或时间，用“查聊天记录”核对原文 |
 | 提醒没有送到 | 让它列出已经保存的提醒；核对时间、时区、消息设置，确认 DSH 持续运行且角色未锁定；查看创建提醒的原聊天 |
 | 说“已派发”，却没看到文件 | 更多 → 工作记录查看状态；到对应 DSH 任务核对工具、权限和实际产物。派发成功不等于完成 |
 | 切换角色被阻止 | 先发送或处理输入草稿，等待未送达消息结束，再切换 |
-| 找不到通话入口 | 1.1.0 未包含语音通话 |
 | 陪伴窗口打不开 | 在“设置 → 陪伴与连接”开启预览，并安装可见模式的 dsh-browser |
 
 ## 动画与界面
@@ -97,13 +97,13 @@ DSH 版本：
 
 ## 模型请求显示 INVALID_REQUEST？
 
-先升级到 1.1.0，并确认实际运行的 Web / Desktop 配置已加载新版本。本次修复了思考模式工具往返所需的回放信息丢失；若仍失败，请提供模型供应商、版本和脱敏后的错误代码。
+确认实际运行的 Web / Desktop 配置已加载新版。1.1.0 起保留思考模式工具往返所需的回放信息。若仍失败，请提供模型供应商、版本和脱敏后的错误代码。
 
-## 1.1.0 图文与截图排错
+## 图文与截图排错
 
 | 现象 | 处理 |
 | --- | --- |
-| 总是写 HTML 文件 | 确认已加载 1.1.0，直接请求原生图文；普通聊天默认使用文字 |
+| 总是写 HTML 文件 | 确认已加载新版，试着直接请求原生图文；普通聊天默认使用文字 |
 | 关闭图文优先仍一直出图 | 保存设置后发送新消息；历史气泡保持原样 |
 | HTML 字体很暗或有重复外框 | 先检查已加载版本，1.1.0 统一气泡底色并修正正文对比 |
 | 长图文没有接续 | 提供虚构内容的最短复现；单个不可拆分图形与多段正文分别检查 |

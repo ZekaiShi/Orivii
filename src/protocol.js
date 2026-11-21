@@ -46,7 +46,7 @@ export function createDotRemote(z) {
     operation('profile',{profile}),
     operation('createChat',{title:z.string().max(200).optional()}),
     operation('editChat',{chatId:id,title:z.string().max(200).optional(),archived:z.boolean().optional()}),
-    operation('send',{chatId:id,text:z.string().min(1).max(16000),requestId:z.string().min(1).max(100),attachments:z.array(id).max(4).optional()}),
+    operation('send',{chatId:id,text:z.string().min(1).max(16000),requestId:z.string().min(1).max(100),attachments:z.array(id).max(4).optional(),timeZone:z.string().max(80).optional()}),
     operation('search',{query:z.string().min(1).max(500)}),
     operation('source',{id}),
     operation('memories',{layer:z.enum(['medium','long','permanent','knowledge','memes'])}),

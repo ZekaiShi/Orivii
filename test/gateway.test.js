@@ -109,6 +109,9 @@ test('strict contract accepts frontend setup, unlock, snapshots, edits and legac
     {action:'developerMode',enabled:true},
     {action:'developerSnapshot',chatId:id},
     {action:'snapshot',chatId:id,beforeId:id},
+    {action:'send',chatId:id,text:'你好',requestId:'old-client'},
+    {action:'send',chatId:id,text:'你好',requestId:'browser-clock',timeZone:'Asia/Shanghai'},
+    {action:'send',chatId:id,text:'你好',requestId:'unknown-clock',timeZone:'Invalid/Zone'},
     {action:'editMemory',id,text:'经过修订的记忆'},
     {action:'import',legacyId:'old-session',title:'旧对话',messages:[{seq:1,role:'user',time:1,text:'你好'}]},
   ])assert.doesNotThrow(()=>parse(value))
@@ -118,6 +121,7 @@ test('strict contract accepts frontend setup, unlock, snapshots, edits and legac
   assert.throws(()=>parse({action:'developerMode',enabled:'true'}))
   assert.throws(()=>parse({action:'developerSnapshot',includeReasoning:true}))
   assert.throws(()=>parse({action:'status',password:'unexpected'}))
+  assert.throws(()=>parse({action:'send',chatId:id,text:'你好',requestId:'clock',timeZone:'x'.repeat(81)}))
   assert.throws(()=>parse({action:'import',legacyId:'old',messages:[{role:'system',text:'hidden'}]}))
 })
 

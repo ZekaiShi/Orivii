@@ -42,6 +42,17 @@ test('quiet hours use configured timezone and daily/cooldown gates run without m
   assert.throws(()=>updatePolicy(p,{intervalMinutes:0}));assert.throws(()=>updatePolicy(p,{timeZone:'bogus'}))
 })
 
+test('community reminder prose uses the shared preparation gate outside the vault writer',async t=>{
+  const {vault,create}=await fixture(t);let prepared=false
+  await vault.transaction(s=>{const row=source('今天中午交材料');s.catalog.messages.push(row);rememberReminders(s,{reminders:[reminder(row)]},[row])})
+  const r=create({prepareReply:async(text,signal,scope)=>{
+    assert.equal(scope.kind,'reminder');assert.equal(scope.chatId,'chat');assert.equal(signal.aborted,false)
+    await vault.transaction(s=>{s.catalog.syntheticPreparation=true});prepared=true;return 'REVIEWED_REMINDER'
+  }})
+  await r.start();await r.tick()
+  assert.equal(prepared,true);assert.equal((await vault.read()).short.messages.at(-1).text,'REVIEWED_REMINDER')
+})
+
 test('concurrent heartbeats persist one delivery across extension restarts',async t=>{
   const {vault,create}=await fixture(t);let calls=0
   await vault.transaction(s=>{const row=source('今天中午交材料');s.catalog.messages.push(row);rememberReminders(s,{reminders:[reminder(row)]},[row])})

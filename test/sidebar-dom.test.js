@@ -37,12 +37,13 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
     }}}
   }},{pointer:path.join(fixture,'pointer.json')})
   await fs.writeFile(host.pointer,JSON.stringify({workspace:path.join(fixture,'workspace')}))
-  let root,plugin,selected=null,regularClicks=0,setupRequest,sidebarEntry,registrationId=0,collapsed=false,settingsExtension=false
+  let root,plugin,selected=null,regularClicks=0,setupRequest,sendRequest,sidebarEntry,registrationId=0,collapsed=false,settingsExtension=false
   const listeners=new Set(),registrations=[],slotListeners=new Set(),effects=[]
   const notifySlots=()=>{for(const listener of slotListeners)listener()}
   const layout={panelInfo:{getSnapshot:()=>({activePanelId:selected})},selectPanel(id){selected=id;for(const listener of listeners)listener()}}
   const ctx={layout,remote:{async $mount(){return async()=>{}},dotCompanion:{async command(request){
-    if(request.action==='setup')setupRequest=request;if(request.action==='send'&&sendGate)await sendGate
+    if(request.action==='setup')setupRequest=request
+    if(request.action==='send'){sendRequest=request;if(sendGate)await sendGate}
     if(request.action==='source'&&sourceGate)await sourceGate
     if(settingsExtension&&request.action==='extension'){
       assert.equal(request.request.operation,'view','navigation must not save or mutate preferences')
@@ -64,7 +65,7 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
   try {
     vm.runInNewContext(await fs.readFile(new URL('../dsh/client.js',import.meta.url),'utf8'),{
       window:{__ModuleLoader__:{load({factory}){plugin=factory(name=>{if(name==='react')return React;if(name==='@deepseek-ai/dsh-client-ui-primitives')return {MarkdownText};if(name==='react-dom')return ReactDOM;if(name==='zod')return {z};throw new Error(name)})}}},
-      AbortController,setInterval,clearInterval,setTimeout,clearTimeout,crypto,
+      AbortController,setInterval,clearInterval,setTimeout,clearTimeout,crypto,Intl,
     })
     await plugin.apply(ctx)
     const Panel=registrations.find(r=>r.options.name==='main').component
@@ -151,6 +152,7 @@ test('real DOM sidebar opens Orivii, toggles inline chats, switches transcripts 
       await createChat()
       await change(input('消息'),text)
       await click(button('发送消息'))
+      assert.equal(sendRequest?.timeZone,new Intl.DateTimeFormat().resolvedOptions().timeZone)
       assert.equal(doc.querySelector('.dot-outgoing .dot-bubble')?.textContent,text,'outgoing bubble appears before host acceptance')
       assert.equal(input('消息').value,'')
       const outgoing=doc.querySelector('.dot-outgoing')

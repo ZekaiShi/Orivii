@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {visibleReply,bubbleParts,messageBubbleParts} from '../src/reply.js'
+import {visibleReply,finalReply,bubbleParts,messageBubbleParts} from '../src/reply.js'
 
 test('only a complete first-line declaration opens the public stream; unknown expression is neutral',()=>{
   for(const privateText of ['计划：先读文件','[dot-reply:heart]','[dot-reply:hea','说明 [dot-reply:heart]\n文本'])assert.equal(visibleReply(privateText),null)
@@ -8,6 +8,27 @@ test('only a complete first-line declaration opens the public stream; unknown ex
   assert.deepEqual(visibleReply('[dot-reply:heart]\n你好呀\n\n第二段'),{expression:'heart',text:'你好呀\n\n第二段'})
   assert.deepEqual(visibleReply('[dot-reply:invalid]\n你好'),{expression:'neutral',text:'你好'})
   for(const invalid of ['', 'not-allowed', '任意脚本', '{"svg":true}'])assert.deepEqual(visibleReply(`[dot-reply:${invalid}]\n正文仍可见`),{expression:'neutral',text:'正文仍可见'})
+})
+
+test('completed replies recover metadata separators without relaxing the live declaration',()=>{
+  for(const input of ['[dot-reply:happy]正文','[dot-reply:happy]\n正文','[dot-reply:happy]\r\n正文',' [dot-reply: happy ]正文','`[dot-reply:happy]`正文'])assert.deepEqual(finalReply(input),{expression:'happy',text:'正文'},input)
+  for(const input of ['[dot-reply:invalid]正文','[dot-reply:]正文','[dot-reply:{"svg":true}]正文','[dot-reply:'+ 'x'.repeat(100)+']正文'])assert.deepEqual(finalReply(input),{expression:'neutral',text:'正文'},input)
+  assert.deepEqual(finalReply('[dot-reply:heart]'),{expression:'heart',text:''})
+  assert.equal(visibleReply('[dot-reply:happy]正文'),null)
+  assert.equal(visibleReply('[dot-reply:happy]'),null)
+})
+
+test('malformed completed metadata drops only its leading line and keeps the real body',()=>{
+  for(const input of ['[dot-reply:happy\n正文','[dot-reply:invalid\r\n正文','[dot-reply:\n正文',' [ DOT-REPLY: happy\n正文'])assert.deepEqual(finalReply(input),{expression:'neutral',text:'正文'},input)
+  for(const input of ['[dot-reply:ha','[dot-reply:','[dot-re','[dot-reply:happy\n'])assert.deepEqual(finalReply(input),{expression:'neutral',text:''},input)
+  assert.deepEqual(finalReply('[dot-reply:happy 正文'),{expression:'neutral',text:''})
+})
+
+test('completed plain text and structured body content keep their formatting',()=>{
+  for(const input of ['普通正文。','    code\n\n正文','[dot-product] 是向量点积。','[dot-replying] 是一个普通名称。','**强调**\n\n- 第一项\n- 第二项','```js\nconst x = [1, 2];\n```','<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="2"/></svg>'])assert.deepEqual(finalReply(input),{expression:'neutral',text:input},input)
+  const body='**重点**\n\n```js\nconst x = 1;\n```\n\n| A | B |\n| --- | --- |\n| 1 | 2 |'
+  assert.deepEqual(finalReply('[dot-reply:curious]'+body),{expression:'curious',text:body})
+  assert.deepEqual(finalReply('正文\n[dot-reply:invalid]\n结尾'),{expression:'neutral',text:'正文\n\n结尾'})
 })
 
 test('ordinary line breaks become consecutive bubbles, while structured Markdown stays intact',()=>{

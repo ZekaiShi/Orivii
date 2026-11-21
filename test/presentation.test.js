@@ -18,6 +18,18 @@ test('several stages arriving in one poll play in order once, with a gap for too
   advance(850);assert.deepEqual(played,['agree','skeptical'])
   player.update('chat',events);advance(1700);assert.deepEqual(played,['agree','skeptical','relieved']);assert.equal(tasks.size,0)
 })
+test('one poll preserves four stage expressions and the final expression in order',()=>{
+  const {player,event,advance,played,tasks}=clock()
+  player.update('chat',[])
+  const expressions=['curious','skeptical','surprised','relieved','excited']
+  const events=expressions.map((expression,index)=>event(index+1,expression))
+  player.update('chat',events)
+  assert.deepEqual(played,['curious'])
+  player.update('chat',events)
+  advance(4250)
+  assert.deepEqual(played,expressions)
+  assert.equal(tasks.size,0)
+})
 test('presentation events skip history, hidden backlog, typing and stale stages; reduced motion has no timer',()=>{
   const {player,event,advance,played,tasks}=clock();player.update('chat',[event(1,'angry')]);assert.equal(played.length,0)
   player.update('chat',[event(2,'agree'),event(3,'happy')]);player.suspend();advance(1000)

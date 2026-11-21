@@ -1,6 +1,6 @@
 {
   "name": "dsh-orivii",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Orivii: an expressive personal assistant for DeepSeek Harness with shared memory, proactive reminders and background work",
   "type": "module",
   "main": "index.js",

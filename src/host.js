@@ -101,6 +101,7 @@ export class DotHost {
       this.media=new CompanionMedia({vault:candidate,services:this.services,key:()=>'',engine:this.engine,...this.services.mediaOptions})
       this.engine.media=this.media
       this.exploration=new Exploration({vault:candidate,engine:this.engine,services:this.services});this.exploration.start()
+      this.engine.followups.start()
     } else candidate.close()
     await fs.mkdir(path.dirname(this.pointer),{recursive:true,mode:0o700})
     await atomicWrite(this.pointer,JSON.stringify({workspace:this.vault.workspace}))
@@ -151,7 +152,7 @@ export class DotHost {
       case 'biliConnection':return checkBiliConnection(this.services,{signal:this.liveController.signal,verify:(await this.vault.read()).catalog.settings.webSearch!==false})
       case 'progress':return this.engine.progress(validId(r.chatId))
       case 'snapshot':return this.snapshot(r)
-      case 'lock': {this.tokens.clear();this.clearDeveloper();this.liveController.abort();await Promise.allSettled([this.media?.stop(),this.exploration?.stop()]);await this.engine.shutdown();await this.vault.queue;this.vault.close();this.vault=null;this.engine=null;return {locked:true}}
+      case 'lock': {this.tokens.clear();this.clearDeveloper();this.liveController.abort();await Promise.allSettled([this.engine.followups.stop(),this.media?.stop(),this.exploration?.stop()]);await this.engine.shutdown();await this.vault.queue;this.vault.close();this.vault=null;this.engine=null;return {locked:true}}
       case 'liveSettings':{
         const lifecycle=this.liveController,assertActive=()=>{if(lifecycle.signal.aborted||!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked')}
         assertActive()
@@ -208,7 +209,7 @@ export class DotHost {
       case 'fileRead':{const result=await this.engine.files.read(r);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
       case 'filePreview':{const result=await filePreview(this.engine.files,r.id);if(!this.allowed(r.token))throw new DotError('记忆库已锁定。','locked');return result}
       case 'markupPreview':return r.format==='visual'?{kind:'visual',spec:validateVisualSpec(JSON.parse(r.source))}:{kind:r.format,html:sanitizeMarkup(r.source)}
-      case 'send':return this.engine.start(validId(r.chatId),r.text,r.requestId,{attachments:r.attachments||[]})
+      case 'send':return this.engine.start(validId(r.chatId),r.text,r.requestId,{attachments:r.attachments||[],timeZone:r.timeZone})
       case 'cancel':await this.engine.cancel();return {cancelled:true}
       case 'search':return (await searchArchive(this.vault,await this.vault.read(),r.query)).map(hit=>hit.role==='assistant'?{...hit,excerpt:responseText(this.vault,hit.excerpt)}:hit)
       case 'source': {
@@ -257,7 +258,7 @@ export class DotHost {
   async disposeLocal(){
     this.tokens.clear();this.clearDeveloper();this.liveController.abort()
     try{
-      await Promise.allSettled([this.media?.stop(),this.exploration?.stop()])
+      await Promise.allSettled([this.engine?.followups.stop(),this.media?.stop(),this.exploration?.stop()])
       await Promise.allSettled([this.engine?.shutdown(),this.vault?.queue])
     }finally{this.vault?.close();this.vault=null;this.engine=null;this.media=null;this.exploration=null}
   }

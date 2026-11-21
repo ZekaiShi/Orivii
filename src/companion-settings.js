@@ -50,7 +50,7 @@ export function createCompanionSettings(React,{rpc,markdown,download=downloadCar
         button('保存相处方式',async id=>{const saved=await command({operation:'saveCard',card});if(current(id)){setCard(saved);setData(d=>({...d,card:saved}));setNotice('已保存。')}},JSON.stringify(card)===JSON.stringify(data.card))):null,
       section==='care'?h(React.Fragment,null,
         check('enabled','有事时可以给我发消息'),
-        h('p',null,'想让我到时叫你，聊天里告诉我就好。改时间、取消，也直接跟我说。'),
+        h('p',null,'想让我到时叫你，聊天里告诉我就好。聊过的疑问有了有用的新线索，我也会在你空闲时回来告诉你。改时间、取消或不再补查，直接跟我说。'),
         h('details',{className:'dot-advanced'},h('summary',null,'少打扰时段'),
           ...[['quietStart','开始时间'],['quietEnd','结束时间']].map(([key,label])=>h('label',{key},label,h('input',{disabled:pending,type:'time',value:policy[key],onChange:e=>setPolicy(p=>({...p,[key]:e.target.value}))}))),
           h('p',null,'平时会避开这个时段；你明确约好的提醒仍按约定时间送达。'),

@@ -10,6 +10,17 @@ export function visibleReply(text) {
   return cleanReply(text.slice(header[0].length),header[1])
 }
 
+// Completed responses can recover harmless header formatting mistakes without
+// relaxing the explicit declaration required while a stream is still live.
+export function finalReply(text) {
+  const raw=String(text??'')
+  const header=raw.match(/^\s*`?\[[ \t]*dot-reply[ \t]*:[ \t]*([^\]\r\n]*)\]`?(?:\r?\n)?/i)
+  if(header)return cleanReply(raw.slice(header[0].length),header[1].trim())
+  const incomplete=raw.match(/^\s*`?\[[ \t]*dot-reply[ \t]*:[^\]\r\n]*(?:\r?\n|$)/i)
+  if(incomplete)return cleanReply(raw.slice(incomplete[0].length),'neutral')
+  return cleanReply(raw)
+}
+
 // Split conversational paragraphs for display, never the stored original.
 // Structured Markdown stays together so lists/tables/code keep their meaning.
 export function bubbleParts(text) {

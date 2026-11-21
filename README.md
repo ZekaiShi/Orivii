@@ -21,34 +21,29 @@
   <a href="https://github.com/ZekaiShi/Orivii/blob/main/README.en.md">English</a>
 </p>
 
-## 1.1.0 · 把想法直接聊成图
+## 1.2.0 · 先接话，查到再回答
 
-对比方案、讲清流程、看看数据，现在都能在聊天气泡里完成。
+问一句「帮我查一下 Node.js 最新 LTS 版本」。查询对象明确时，Orivii 会先回一句「好，我看看。」，在后台查询公开资料，再发一条答复说明查到的结果。等资料回来时，你可以接着聊。
 
-- **六种原生图文模板。** 图解、对比、指标、流程、图表和交互控件统一排版，配套 Lucide 图标。滑块和开关在本地更新，长内容按完整段落接到新气泡。
-- **先好好聊天。** 日常交流和普通查询直接回复；需要图解时使用原生组件，需要网页或文件时再交付附件。后续修改可以接着做，关掉“优先用图文解释”就恢复文字优先。
-- **B 站画面更快拿到。** 同一角色跨聊天复用本地截图；首次默认读取插件快速预览，需要细节时再抽取原视频画面。普通截图取到即发送，解读画面时才启用看图。
-- **图片和图文都贴合聊天。** 小图保持原尺寸，大图等比缩放，下载按钮收在右下角；HTML/SVG 与原生图文共用气泡外框，文字按实际底色保持清晰。
+- **看到依据再下结论。** 答复区分网页原文和搜索摘要，缺少依据时说明还有什么无法确认。需要可用的 DSH 联网服务。
+- **时区和表情跟上对话。** Web 页面按浏览器时区理解当前时间；消息保留原始发送时间。阶段回应和最终答复的表情按到达顺序播放。
+- **闲下来时补查。** 开启相关设置后，Orivii 可以低频补查还没解决的公开问题，找到有用的新线索时回到原聊天。
 
-![1.1.0 原生图文气泡排版示意，使用虚构数据](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/visual-bubbles.svg)
-
-*原创排版示意，使用演示数据；不是实际聊天截图。*
-
-[本次更新与升级步骤](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/1.1.0.md) · [图文气泡教程](https://github.com/ZekaiShi/Orivii/blob/main/docs/visuals.md) · [所有版本](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/README.md)
+[本次更新与升级步骤](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/1.2.0.md) · [联网查询教程](https://github.com/ZekaiShi/Orivii/blob/main/docs/usage.md#需要时联网) · [所有版本](https://github.com/ZekaiShi/Orivii/blob/main/docs/updates/README.md)
 
 ## 快速开始
 
-**1.1.0 已发布到 npm 和 GitHub Release。**
+**1.2.0 安装包**见 [GitHub Release](https://github.com/ZekaiShi/Orivii/releases/tag/v1.2.0)。
 
 **已在使用 DSH？** 安装插件、选一个资料目录，就可以开始。模型沿用你在 DSH 中配置的服务。
 
 1. **安装。** Web 用户在运行 DSH 的电脑上执行：
 
    ```powershell
-   dsh.cmd plugin --profile web add dsh-orivii@1.1.0
+   dsh.cmd plugin --profile web add https://github.com/ZekaiShi/Orivii/releases/download/v1.2.0/dsh-orivii-1.2.0.tgz
    ```
 
-   Linux / macOS 将 `dsh.cmd` 改为 `dsh`。Desktop 用户在应用内插件管理中添加 **`dsh-orivii@1.1.0`**，按提示加载新版。
+   Linux / macOS 将 `dsh.cmd` 改为 `dsh`。Desktop 用户在应用内插件管理中添加同一个 [1.2.0 安装包地址](https://github.com/ZekaiShi/Orivii/releases/download/v1.2.0/dsh-orivii-1.2.0.tgz)，按提示加载新版。
 2. **打开。** 点击左侧 **Orivii**，选择工作空间，设置名字与解锁密码。
 3. **认识一下。** 发一句「叫我小林就好，平时说话简短一点」，开始你们的第一段对话。
 
@@ -81,11 +76,15 @@
 
 联网需要可用的 DSH 搜索服务；后台工作取决于宿主已配置的工具与权限。提醒需要 DSH 持续运行、对应角色保持解锁，不是关机也能响的系统闹钟。
 
-## 从 1.0.x 接着用
+## 从旧版本接着用
 
 图片与附件、独立角色、解锁期限、提醒和后台工作继续保留。升级前备份角色工作空间，加载新版后打开原目录即可接着聊。
 
 [安装与升级](https://github.com/ZekaiShi/Orivii/blob/main/docs/getting-started.md) · [备份与恢复](https://github.com/ZekaiShi/Orivii/blob/main/docs/data-and-privacy.md) · [图片与外观](https://github.com/ZekaiShi/Orivii/blob/main/docs/interaction-preview.md)
+
+图解、对比、指标、流程、图表与交互控件都可以直接显示在聊天气泡里。[图文气泡教程](https://github.com/ZekaiShi/Orivii/blob/main/docs/visuals.md)
+
+![原生图文气泡排版示意，使用虚构数据](https://raw.githubusercontent.com/ZekaiShi/Orivii/main/media/visual-bubbles.svg)
 
 ## 多一种相处方式
 
@@ -105,7 +104,7 @@
 | --- | --- |
 | 称呼 | 「叫我小林。平时简短温柔一些，讨论代码时直接一点。」 |
 | 接着聊 | 先说「周末的阅读计划先定科幻小说」，新建聊天后问「接着刚才的阅读计划聊吧」。 |
-| 查资料 | 「查一下这个项目最近一次官方更新，给我日期和原文链接；找不到就直说。」再附上项目链接。 |
+| 查资料 | 「请查一下 Node.js 最新 LTS 版本。」 |
 | 图文解释 | 「用两栏比较这两个方案，再画出选择流程。只使用我给出的数据。」 |
 | 交互演示 | 「用滑块调整数量，实时显示总价。单价设为 12，标成演示数据。」 |
 | B 站截图 | 「把这个视频中讲到字形的画面发给我，再解释一下。已有截图就直接用。」再附上 BV 号。 |
@@ -133,7 +132,7 @@
 
 **现在可以使用：** 文字与图片聊天、附件收发、表情、跨聊天连续状态、联网查询、B 站插件读取、自然语言提醒、后台委托、多角色、外观与解锁期限。
 
-**继续完善：** Office 与 PDF 正文解析、知识纠错与召回、科研工作流和更多官方消息渠道。同步陪看、网页共读与指定话题探索提供默认关闭的预览入口，依赖宿主配置；语音通话未包含在 1.1.0 中。
+**继续完善：** Office 与 PDF 正文解析、知识纠错与召回、科研工作流、更多官方消息渠道及语音通话。同步陪看、网页共读与指定话题探索提供默认关闭的预览入口，依赖宿主配置。
 
 [查看完整更新计划](https://github.com/ZekaiShi/Orivii/blob/main/UPDATES.md) · [查看已发布更新](https://github.com/ZekaiShi/Orivii/blob/main/CHANGELOG.md)
 

@@ -19,3 +19,18 @@ test('broken policy output fails closed without putting private errors in the UI
     assert.equal(responseText(vault,'source',{partial:true}),'')
   }
 })
+
+test('request context reaches a host policy without becoming part of the visible reply',()=>{
+  const state={short:{messages:[]}},scope={chatId:'synthetic-chat',userId:'synthetic-user',jobId:'synthetic-job',kind:'reply'},seen=[]
+  const vault={responsePolicy:{preview:(text,context)=>{seen.push(context);return text},filter:text=>text}}
+  assert.equal(responseText(vault,'Visible text',{partial:true,state,scope}),'Visible text')
+  assert.deepEqual(seen,[{state,scope}])
+  assert.equal(responseText(vault,'Final text'),'Final text')
+})
+
+test('whole-reply suppression is an explicit host policy capability',()=>{
+  const vault={responsePolicy:{allowEmpty:true,filter:()=>'',preview:()=>''}}
+  assert.equal(responseText(vault,'Synthetic omitted text'),'')
+  assert.equal(responseBubble(vault,{role:'assistant',text:'Synthetic omitted text'}).text,'')
+  for(const allowEmpty of [undefined,false,'true'])assert.throws(()=>responseText({responsePolicy:{allowEmpty,filter:()=>''}},'source'),e=>e.code==='presentation')
+})

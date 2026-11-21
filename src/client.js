@@ -312,7 +312,7 @@ function registerUi(ctx) {
     function send(){
       const attachments=filesRef.current.filter(f=>f.status==='ready').map(({id,name,mediaType,size,kind})=>({id,name,mediaType,size,kind}))
       const text=draftRef.current.trim()||(attachments.length?'分享了'+attachments.length+'个附件':'');if(!text||!ready||switching.current||filesRef.current.some(f=>f.status==='uploading'))return
-      const request={text,attachments,chatId:activeRef.current,id:crypto.randomUUID(),time:Date.now(),status:'sending'}
+      const request={text,attachments,chatId:activeRef.current,id:crypto.randomUUID(),time:Date.now(),timeZone:new Intl.DateTimeFormat().resolvedOptions().timeZone,status:'sending'}
       sendTransition.current.capture(request.id,composer.current);changeFiles([])
       draftRef.current='';setDraft('');setError('');stickToBottom.current=true
       setOutbox(old=>[...old,request]);eyeController.current?.activity('message')
@@ -341,7 +341,7 @@ function registerUi(ctx) {
         }
         // Start the request immediately. The Host persists and orders messages;
         // generating a reply never holds the composer or the next send hostage.
-        const accepted=await rpc('send',{chatId:id,text:request.text,requestId:request.id,...(request.attachments?.length?{attachments:request.attachments.map(f=>f.id)}:{})})
+        const accepted=await rpc('send',{chatId:id,text:request.text,requestId:request.id,timeZone:request.timeZone,...(request.attachments?.length?{attachments:request.attachments.map(f=>f.id)}:{})})
         received=true
         if(!current())return
         setOutbox(old=>old.map(m=>m.id===request.id?{...m,chatId:id,serverId:accepted.userId,status:'sent'}:m))
